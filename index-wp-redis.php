@@ -26,6 +26,8 @@ function wp_redis_cache_exception_handler( $exception ) {
 }
 
 /**
+ * END GLOBAL CONFIGURATION
+ *
  * DO NOT EDIT BELOW THIS LINE!
  */
 $GLOBALS['wp_redis_cache_config']['current_url'] = wp_redis_cache_get_clean_url( $GLOBALS['wp_redis_cache_config']['secret_string'] );
@@ -34,19 +36,43 @@ $GLOBALS['wp_redis_cache_config']['redis_key']   = md5( $GLOBALS['wp_redis_cache
 // Start the timer so we can track the page load time
 $start = microtime();
 
+/**
+ * UTILITY FUNCTIONS
+ */
+
+/**
+ * Compute microtime from a timestamp
+ *
+ * @return float
+ */
 function wp_redis_cache_get_micro_time( $time ) {
 	list( $usec, $sec ) = explode( " ", $time );
 	return ( (float) $usec + (float) $sec );
 }
 
+/**
+ * Is the current request a refresh request with the correct secret key?
+ *
+ * @return bool
+ */
 function wp_redis_cache_refresh_has_secret( $secret ) {
 	return isset( $_GET['refresh'] ) && $secret == $_GET['refresh'];
 }
 
+/**
+ * Does current request include a refresh request?
+ *
+ * @return bool
+ */
 function wp_redis_cache_request_has_secret( $secret ) {
 	return false !== strpos( $_SERVER['REQUEST_URI'], "refresh=${secret}" );
 }
 
+/**
+ * Determine if request is from a server other than the one running this code
+ *
+ * @return bool
+ */
 function wp_redis_cache_is_remote_page_load( $current_url, $server_ip ) {
 	return ( isset( $_SERVER['HTTP_REFERER'] )
 			&& $_SERVER['HTTP_REFERER'] == $current_url
@@ -54,6 +80,11 @@ function wp_redis_cache_is_remote_page_load( $current_url, $server_ip ) {
 			&& $_SERVER['REMOTE_ADDR'] != $server_ip );
 }
 
+/**
+ * Set proper IP address for proxied requests
+ *
+ * @return null
+ */
 function wp_redis_cache_handle_cdn_remote_addressing() {
 	// so we don't confuse the cloudflare server
 	if ( isset( $_SERVER['HTTP_CF_CONNECTING_IP'] ) ) {
@@ -61,15 +92,28 @@ function wp_redis_cache_handle_cdn_remote_addressing() {
 	}
 }
 
+/**
+ * Prepare a URL for use as a cache key
+ *
+ * Strips secret key from URL
+ *
+ * @param string
+ * @return string
+ */
 function wp_redis_cache_get_clean_url( $secret ) {
 	$replace_keys = array( "?refresh=${secret}","&refresh=${secret}" );
-	$url = "http://${_SERVER['HTTP_HOST']}${_SERVER['REQUEST_URI']}";
-	$current_url = str_replace( $replace_keys, '', $url );
-	return $current_url;
+	$url          = 'http://' . $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'];
+	return str_replace( $replace_keys, '', $url );
 }
 
+/**
+ * BEGIN CACHING LOGIC
+ */
+
+// Set proper IP for proxied requests
 wp_redis_cache_handle_cdn_remote_addressing();
 
+// Ensure WP uses a theme (this is normally set in index.php)
 if ( ! defined( 'WP_USE_THEMES' ) ) {
 	define( 'WP_USE_THEMES', true );
 }
