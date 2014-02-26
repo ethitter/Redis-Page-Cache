@@ -37,6 +37,13 @@ $GLOBALS['wp_redis_cache_config']['redis_key']   = md5( $GLOBALS['wp_redis_cache
 $start = microtime();
 
 /**
+ * MOBILE HANDLING
+ */
+if ( wp_redis_cache_is_mobile_request() ) {
+	$GLOBALS['wp_redis_cache_config']['redis_key'] = 'MO-' . $GLOBALS['wp_redis_cache_config']['redis_key'];
+}
+
+/**
  * UTILITY FUNCTIONS
  */
 
@@ -104,6 +111,13 @@ function wp_redis_cache_get_clean_url( $secret ) {
 	$replace_keys = array( "?refresh=${secret}","&refresh=${secret}" );
 	$url          = 'http://' . $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'];
 	return str_replace( $replace_keys, '', $url );
+}
+
+/**
+ *
+ */
+function wp_redis_cache_is_mobile_request() {
+	return false;
 }
 
 /**

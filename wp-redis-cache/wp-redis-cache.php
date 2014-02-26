@@ -245,11 +245,13 @@ class WP_Redis_Cache {
 
 			$redis_key = md5( $permalink );
 			$redis->del( $redis_key );
+			$redis->del( 'MO-' . $redis_key );
 
 			//refresh the front page
 			$front_page = get_home_url( '/' );
 			$redis_key = md5( $front_page );
 			$redis->del( $redis_key );
+			$redis->del( 'MO-' . $redis_key );
 		}
 	}
 }
