@@ -80,7 +80,7 @@ try {
 
 		$redis->del( $redis_key );
 
-		require('./wp-blog-header.php');
+		require './wp-blog-header.php';
 
 		$unlimited           = get_option( 'wp-redis-cache-debug',   false );
 		$seconds_cache_redis = get_option( 'wp-redis-cache-seconds', 43200 );
@@ -107,7 +107,7 @@ try {
 
 		if ( ! $is_post && ! $logged_in ) {
 			ob_start();
-			require('./wp-blog-header.php');
+			require './wp-blog-header.php';
 			$html_of_page = ob_get_contents();
 			ob_end_clean();
 			echo $html_of_page;
@@ -126,16 +126,16 @@ try {
 				}
 			}
 		} else { //either the user is logged in, or is posting a comment, show them uncached
-			require('./wp-blog-header.php');
+			require './wp-blog-header.php';
 		}
 	} elseif ( $_SERVER['REMOTE_ADDR'] != $server_ip && true === strstr( $current_url, 'preview=true' ) ) {
-		require('./wp-blog-header.php');
+		require './wp-blog-header.php';
 	}
 	 // else {   // This is what your server should get if no cache exists  //deprecated, as the ob_start() is cleaner
-		// require('./wp-blog-header.php');
+		// require './wp-blog-header.php';
 	// }
 } catch ( Exception $e ) {
-	//require('./wp-blog-header.php');
+	//require './wp-blog-header.php';
 	echo "something went wrong";
 }
 
