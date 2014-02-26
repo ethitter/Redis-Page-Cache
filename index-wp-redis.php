@@ -16,13 +16,15 @@ $GLOBALS['wp_redis_cache_config'] = array(
 	'secret_string' => 'changeme',
 );
 
-// Do not edit these values!
-$GLOBALS['wp_redis_cache_config']['current_url'] = get_clean_url( $GLOBALS['wp_redis_cache_config']['secret_string'] );
-$GLOBALS['wp_redis_cache_config']['redis_key']   = md5( $GLOBALS['wp_redis_cache_config']['current_url'] );
+// Uncomment either option below to fix the values here and disable the admin UI
+// $GLOBALS['wp_redis_cache_config']['cache_duration'] = 43200;
+// $GLOBALS['wp_redis_cache_config']['unlimited']      = false;
 
 /**
  * DO NOT EDIT BELOW THIS LINE!
  */
+$GLOBALS['wp_redis_cache_config']['current_url'] = get_clean_url( $GLOBALS['wp_redis_cache_config']['secret_string'] );
+$GLOBALS['wp_redis_cache_config']['redis_key']   = md5( $GLOBALS['wp_redis_cache_config']['current_url'] );
 
 // Start the timer so we can track the page load time
 $start = microtime();
@@ -101,11 +103,6 @@ try {
 		$redis->del( $GLOBALS['wp_redis_cache_config']['redis_key'] );
 
 		require dirname( __FILE__ ) . '/wp-blog-header.php';
-
-		// $unlimited           = get_option( 'wp-redis-cache-debug',   false );
-		$unlimited           = false;
-		// $seconds_cache_redis = get_option( 'wp-redis-cache-seconds', 43200 );
-		$seconds_cache_redis = 300;
 	// If the cache does not exist lets display the user the normal page without cache, and then fetch a new cache page
 	} elseif ( $_SERVER['REMOTE_ADDR'] != $GLOBALS['wp_redis_cache_config']['server_ip'] && false === strstr( $GLOBALS['wp_redis_cache_config']['current_url'], 'preview=true' ) ) {
 		if ( $GLOBALS['wp_redis_cache_config']['debug'] ) {
@@ -126,17 +123,32 @@ try {
 			$html_of_page = trim( ob_get_clean() );
 			echo $html_of_page;
 
-			if ( ! is_numeric( $seconds_cache_redis ) ) {
-				$seconds_cache_redis = 43200;
-			}
-
 			// When a page displays after an "HTTP 404: Not Found" error occurs, do not cache
 			// When the search was used, do not cache
 			if ( ! is_404() && ! is_search() ) {
+				if ( isset( $GLOBALS['wp_redis_cache_config']['unlimited'] ) ) {
+					$unlimited = $GLOBALS['wp_redis_cache_config']['unlimited'];
+				} else {
+					$unlimited = (bool) get_option( 'wp-redis-cache-debug', false );
+					$GLOBALS['wp_redis_cache_config']['unlimited'] = $unlimited;
+				}
+
+				// Determine how long to cache the page for and set the cache
 				if ( $unlimited ) {
 					$redis->set( $GLOBALS['wp_redis_cache_config']['redis_key'], $html_of_page );
 				} else {
-					$redis->setex( $GLOBALS['wp_redis_cache_config']['redis_key'], $seconds_cache_redis, $html_of_page );
+					if ( isset( $GLOBALS['wp_redis_cache_config']['cache_duration'] ) ) {
+						$cache_duration = $GLOBALS['wp_redis_cache_config']['cache_duration'];
+					} else {
+						$cache_duration = (int) get_option( 'wp-redis-cache-seconds', 43200 );
+						$GLOBALS['wp_redis_cache_config']['cache_duration'] = $cache_duration;
+					}
+
+					if ( ! is_numeric( $cache_duration ) ) {
+						$cache_duration = $GLOBALS['wp_redis_cache_config']['cache_duration'] = 43200;
+					}
+
+					$redis->setex( $GLOBALS['wp_redis_cache_config']['redis_key'], $cache_duration, $html_of_page );
 				}
 			}
 		} else { //either the user is logged in, or is posting a comment, show them uncached
@@ -167,12 +179,12 @@ $time = @get_micro_time( $end ) - @get_micro_time( $start );
 if ( $GLOBALS['wp_redis_cache_config']['debug'] ) {
 	echo "<!-- Cache system by Benjamin Adams. Page generated in " . round($time, 5) . " seconds. -->\n";
 	echo "<!-- Site was cached  = " . $GLOBALS['wp_redis_cache_config']['cache'] . " -->\n";
-	if ( isset( $seconds_cache_redis ) ) {
-		echo "<!-- wp-redis-cache-seconds  = " . $seconds_cache_redis . " -->\n";
+	if ( isset( $GLOBALS['wp_redis_cache_config']['cache_duration'] ) ) {
+		echo "<!-- wp-redis-cache-seconds  = " . $GLOBALS['wp_redis_cache_config']['cache_duration'] . " -->\n";
 	}
 	echo "<!-- wp-redis-cache-ip  = " . $GLOBALS['wp_redis_cache_config']['server_ip'] . "-->\n";
-	if ( isset( $unlimited ) ) {
-		echo "<!-- wp-redis-cache-unlimited = " . $unlimited . "-->\n";
+	if ( isset( $GLOBALS['wp_redis_cache_config']['unlimited'] ) ) {
+		echo "<!-- wp-redis-cache-unlimited = " . $GLOBALS['wp_redis_cache_config']['unlimited'] . "-->\n";
 	}
 	echo "<!-- wp-redis-cache-debug  = " . $GLOBALS['wp_redis_cache_config']['debug'] . "-->\n";
 }
