@@ -190,8 +190,6 @@ try {
 		}
 
 		$redis->del( $GLOBALS['wp_redis_cache_config']['redis_key'] );
-
-		// require_once dirname( __FILE__ ) . '/wp-blog-header.php';
 	// This page is cached, the user isn't logged in, and it isn't a POST request, so let's use the cache
 	} elseif ( ! $is_post && ! $logged_in && $redis->exists( $GLOBALS['wp_redis_cache_config']['redis_key'] ) ) {
 		if ( $GLOBALS['wp_redis_cache_config']['debug'] ) {
@@ -249,15 +247,9 @@ try {
 						$redis->setex( $GLOBALS['wp_redis_cache_config']['redis_key'], $cache_duration, $markup_to_cache );
 					}
 				}
-			} /*else {
-				require_once dirname( __FILE__ ) . '/wp-blog-header.php';
-			}*/
-		} /*else {
-			require_once dirname( __FILE__ ) . '/wp-blog-header.php';
-		}*/
-	} /*else {
-		require_once dirname( __FILE__ ) . '/wp-blog-header.php';
-	}*/
+			}
+		}
+	}
 
 	// The current request wasn't served from cache or isn't cacheable, so we pass off to WP
 	if ( $load_wp ) {
