@@ -2,8 +2,9 @@
 /*
 Plugin Name: WP Redis Cache
 Plugin URI: https://github.com/BenjaminAdams/wp-redis-cache
-Version: 1.0
-Author: Benjamin Adams
+Version: 1.1
+Description: Manage settings for full-page caching powered by Redis.
+Author: Benjamin Adams & Erick Hitter
 Author URI: http://dudelol.com
 
 Cache WordPress using Redis, the fastest way to date to cache WordPress.
