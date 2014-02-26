@@ -1,2 +1,2 @@
 <?php
-require('index-wp-redis.php');
+require 'index-wp-redis.php';
