@@ -135,6 +135,8 @@ try {
 		}
 	} elseif ( $_SERVER['REMOTE_ADDR'] != $server_ip && true === strstr( $current_url, 'preview=true' ) ) {
 		require dirname( __FILE__ ) . '/wp-blog-header.php';
+	} else {
+		require dirname( __FILE__ ) . '/wp-blog-header.php';
 	}
 } catch ( Exception $e ) {
 	require dirname( __FILE__ ) . '/wp-blog-header.php';
