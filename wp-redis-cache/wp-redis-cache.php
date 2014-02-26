@@ -180,7 +180,7 @@ class WP_Redis_Cache {
 	public function render_ui() {
 		?>
 		<div class="wrap">
-		<h2>WP Redis Options</h2>
+		<h2>WP Redis Cache Options</h2>
 		<form method="post" action="options.php">
 			<?php settings_fields( $this->ns ); ?>
 
