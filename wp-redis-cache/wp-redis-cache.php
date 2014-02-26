@@ -170,22 +170,35 @@ class WP_Redis_Cache {
 	 */
 	public function render_ui() {
 		?>
-		<div class='wrap'>
+		<div class="wrap">
 		<h2>WP Redis Options</h2>
 		<form method="post" action="options.php">
-		<?php settings_fields( $this->ns ); ?>
+			<?php settings_fields( $this->ns ); ?>
 
-			<p>This plugin does not work out of the box and requires additional steps.<br />Please follow these install instructions: <a target='_blank' href='https://github.com/BenjaminAdams/wp-redis-cache'>https://github.com/BenjaminAdams/wp-redis-cache</a></p>
+			<p><?php printf( __( 'This plugin does not work out of the box and requires additional steps.<br />Please follow these install instructions: %s.', 'wp-redis-cache' ), '<a target="_blank" href="https://github.com/BenjaminAdams/wp-redis-cache">https://github.com/BenjaminAdams/wp-redis-cache</a>' ); ?></p>
 
-			<p>If you do not have Redis installed on your machine this will NOT work!</p>
+			<p><?php _e( 'If you do not have Redis installed on your machine this will NOT work!', 'wp-redis-cache' ); ?></p>
 
-			<p><strong>Duration of Caching in Seconds:</strong><br />How many seconds would you like to cache individual pages?  *Recommended 12 hours or 43200 seconds <br />
-			<input type="text" name="wp-redis-cache-seconds" size="45" value="<?php echo (int) get_option( 'wp-redis-cache-seconds' ); ?>" /></p>
+			<table class="form-table">
+				<tr>
+					<th scope="row"><label for="duration-seconds"><?php _e( 'Duration of Caching in Seconds:', 'wp-redis-cache' ); ?></label></td>
+					<td>
+						<input type="text" name="wp-redis-cache-seconds" id="duration-seconds" size="15" value="<?php echo (int) get_option( 'wp-redis-cache-seconds', 43200 ); ?>" />
 
-			<p><strong>Cache without expiration:</strong><br />If this option is set, the cache never expire. This option overides the setting <em>Duration of Caching in Seconds</em>.<br />
-			<input type="checkbox" name="wp-redis-cache-unlimited" value="1" <?php checked( true, (bool) get_option( 'wp-redis-cache-unlimited' ) ); ?>/></p>
+						<p class="description"><?php _e( 'How many seconds would you like to cache individual pages? <strong>Recommended 12 hours or 43200 seconds</strong>.', 'wp-redis-cache' ); ?></p>
+					</td>
+				</tr>
+				<tr>
+					<th scope="row"><label for="unlimited-cache"><?php _e( 'Cache Without Expiration?', 'wp-redis-cache' ); ?></label></th>
+					<td>
+						<input type="checkbox" name="wp-redis-cache-unlimited" id="unlimited-cache" value="1" <?php checked( true, (bool) get_option( 'wp-redis-cache-unlimited', false ) ); ?>/>
 
-			<p><?php submit_button(); ?></p>
+						<p class="description"><?php _e( 'If this option is set, the cache never expire. This option overides the setting <em>Duration of Caching in Seconds</em>.', 'wp-redis-cache' ); ?></p>
+					</td>
+				</tr>
+			</table>
+
+			<?php submit_button(); ?>
 		</form>
 		</div>
 		<?php
