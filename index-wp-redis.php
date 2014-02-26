@@ -40,7 +40,9 @@ function get_clean_url( $secret ) {
 $debug         = true;
 $cache         = true;
 $server_ip     = '127.0.0.1';
-$reddis_server = '127.0.0.1';
+$redis_server  = '127.0.0.1';
+$redis_port    = 6379;
+$redis_db      = 0;
 $secret_string = 'changeme';
 $current_url   = get_clean_url( $secret_string );
 $redis_key     = md5( $current_url );
@@ -61,15 +63,19 @@ try {
 		$redis = new Redis();
 
 		// Sockets can be used as well. Documentation @ https://github.com/nicolasff/phpredis/#connection
-		$redis->connect( $reddis_server );
-
+		$redis->connect( $redis_server, $redis_port );
+		$redis->select( $redis_db );
 	} else { // Fallback to predis5.2.php
 		if ( $debug ) {
 			echo "<!-- using predis as a backup -->\n";
 		}
 
 		include_once( "wp-content/plugins/wp-redis-cache/predis5.2.php" ); //we need this to use Redis inside of PHP
-		$redis = new Predis_Client();
+		$redis = new Predis_Client( array(
+			'host'     => $redis_server,
+			'port'     => $redis_port,
+			'database' => $redis_db,
+		) );
 	}
 
 	//Either manual refresh cache by adding ?refresh=secret_string after the URL or somebody posting a comment
@@ -102,7 +108,7 @@ try {
 			echo "<!-- displaying page without cache -->\n";
 		}
 
-		$is_post  = (int) 'POST' === $_SERVER['REQUEST_METHOD'];
+		$is_post   = (int) 'POST' === $_SERVER['REQUEST_METHOD'];
 		$logged_in = preg_match( "/wordpress_logged_in/", var_export( $_COOKIE, true ) );
 
 		if ( ! $is_post && ! $logged_in ) {
@@ -130,12 +136,8 @@ try {
 	} elseif ( $_SERVER['REMOTE_ADDR'] != $server_ip && true === strstr( $current_url, 'preview=true' ) ) {
 		require dirname( __FILE__ ) . '/wp-blog-header.php';
 	}
-	 // else {   // This is what your server should get if no cache exists  //deprecated, as the ob_start() is cleaner
-		// require dirname( __FILE__ ) . '/wp-blog-header.php';
-	// }
 } catch ( Exception $e ) {
-	//require dirname( __FILE__ ) . '/wp-blog-header.php';
-	echo "something went wrong";
+	require dirname( __FILE__ ) . '/wp-blog-header.php';
 }
 
 $end  = microtime();
@@ -146,7 +148,6 @@ if ( $debug ) {
 	if ( isset( $seconds_cache_redis ) ) {
 		echo "<!-- wp-redis-cache-seconds  = " . $seconds_cache_redis . " -->\n";
 	}
-	echo "<!-- wp-redis-cache-secret  = " . $secret_string . "-->\n";
 	echo "<!-- wp-redis-cache-ip  = " . $server_ip . "-->\n";
 	if ( isset( $unlimited ) ) {
 		echo "<!-- wp-redis-cache-unlimited = " . $unlimited . "-->\n";
