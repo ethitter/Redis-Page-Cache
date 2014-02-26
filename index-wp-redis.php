@@ -20,6 +20,11 @@ $GLOBALS['wp_redis_cache_config'] = array(
 // $GLOBALS['wp_redis_cache_config']['cache_duration'] = 43200;
 // $GLOBALS['wp_redis_cache_config']['unlimited']      = false;
 
+// Modify this function to introduce custom handling when exceptions occur
+function wp_redis_cache_exception_handler( $exception ) {
+	return;
+}
+
 /**
  * DO NOT EDIT BELOW THIS LINE!
  */
@@ -172,6 +177,7 @@ try {
 	}
 } catch ( Exception $e ) {
 	require dirname( __FILE__ ) . '/wp-blog-header.php';
+	wp_redis_cache_exception_handler( $e );
 }
 
 $end  = microtime();
