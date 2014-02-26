@@ -171,6 +171,10 @@ try {
 	// Establish connection with Redis server
 	$redis = wp_redis_cache_connect_redis();
 
+	// Relevant details on the current request
+	$is_post   = (bool) 'POST' === $_SERVER['REQUEST_METHOD'];
+	$logged_in = (bool) preg_match( "#(wordpress_(logged|sec)|comment_author)#", var_export( $_COOKIE, true ) );
+
 	//Either manual refresh cache by adding ?refresh=secret_string after the URL or somebody posting a comment
 	if ( wp_redis_cache_refresh_has_secret( $GLOBALS['wp_redis_cache_config']['secret_string'] ) || wp_redis_cache_request_has_secret( $GLOBALS['wp_redis_cache_config']['secret_string'] ) || wp_redis_cache_is_remote_page_load( $GLOBALS['wp_redis_cache_config']['current_url'], $GLOBALS['wp_redis_cache_config']['server_ip'] ) ) {
 		if ( $GLOBALS['wp_redis_cache_config']['debug'] ) {
@@ -180,14 +184,22 @@ try {
 		$redis->del( $GLOBALS['wp_redis_cache_config']['redis_key'] );
 
 		require dirname( __FILE__ ) . '/wp-blog-header.php';
+	// This page is cached, lets display it
+	} elseif ( ! $is_post && ! $logged_in && $redis->exists( $GLOBALS['wp_redis_cache_config']['redis_key'] ) ) {
+		if ( $GLOBALS['wp_redis_cache_config']['debug'] ) {
+			echo "<!-- serving page from cache: key: " . $GLOBALS['wp_redis_cache_config']['redis_key'] . " -->\n";
+		}
+
+		$GLOBALS['wp_redis_cache_config']['cached'] = true;
+
+		$html_of_page = trim( $redis->get( $GLOBALS['wp_redis_cache_config']['redis_key'] ) );
+		echo $html_of_page;
+
 	// If the cache does not exist lets display the user the normal page without cache, and then fetch a new cache page
 	} elseif ( $_SERVER['REMOTE_ADDR'] != $GLOBALS['wp_redis_cache_config']['server_ip'] && false === strstr( $GLOBALS['wp_redis_cache_config']['current_url'], 'preview=true' ) ) {
 		if ( $GLOBALS['wp_redis_cache_config']['debug'] ) {
 			echo "<!-- displaying page without cache -->\n";
 		}
-
-		$is_post   = (bool) 'POST' === $_SERVER['REQUEST_METHOD'];
-		$logged_in = (bool) preg_match( "#(wordpress_(logged|sec)|comment_author)#", var_export( $_COOKIE, true ) );
 
 		if ( $GLOBALS['wp_redis_cache_config']['debug'] ) {
 			echo "<!-- POST request: . " . ( $is_post ? 'yes' : 'no' ) . "-->\n";
@@ -233,17 +245,6 @@ try {
 		}
 	} elseif ( $_SERVER['REMOTE_ADDR'] != $GLOBALS['wp_redis_cache_config']['server_ip'] && true === strstr( $GLOBALS['wp_redis_cache_config']['current_url'], 'preview=true' ) ) {
 		require dirname( __FILE__ ) . '/wp-blog-header.php';
-	// This page is cached, lets display it
-	} elseif ( $redis->exists( $GLOBALS['wp_redis_cache_config']['redis_key'] ) ) {
-		if ( $GLOBALS['wp_redis_cache_config']['debug'] ) {
-			echo "<!-- serving page from cache: key: " . $GLOBALS['wp_redis_cache_config']['redis_key'] . " -->\n";
-		}
-
-		$GLOBALS['wp_redis_cache_config']['cached'] = true;
-
-		$html_of_page = trim( $redis->get( $GLOBALS['wp_redis_cache_config']['redis_key'] ) );
-		echo $html_of_page;
-
 	} else {
 		require dirname( __FILE__ ) . '/wp-blog-header.php';
 	}
