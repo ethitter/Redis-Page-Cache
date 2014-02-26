@@ -163,7 +163,7 @@ class WP_Redis_Cache {
 	public function register_ui() {
 		// Don't show UI
 		if ( defined( 'WP_REDIS_CACHE_HIDE_UI' ) && WP_REDIS_CACHE_HIDE_UI ) {
-			return
+			return;
 		}
 
 		add_options_page( 'WP Redis Cache', 'WP Redis Cache', 'manage_options', $this->ns, array( $this, 'render_ui' ) );
