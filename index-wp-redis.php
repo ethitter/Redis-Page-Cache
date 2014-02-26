@@ -16,11 +16,11 @@ function request_has_secret( $secret ) {
 	return false !== strpos( $_SERVER['REQUEST_URI'], "refresh=${secret}" );
 }
 
-function is_remote_page_load( $currentUrl, $websiteIp ) {
+function is_remote_page_load( $current_url, $server_ip ) {
 	return ( isset( $_SERVER['HTTP_REFERER'] )
-			&& $_SERVER['HTTP_REFERER'] == $currentUrl
+			&& $_SERVER['HTTP_REFERER'] == $current_url
 			&& $_SERVER['REQUEST_URI'] != '/'
-			&& $_SERVER['REMOTE_ADDR'] != $websiteIp );
+			&& $_SERVER['REMOTE_ADDR'] != $server_ip );
 }
 
 function handle_cdn_remote_addressing() {
@@ -31,15 +31,15 @@ function handle_cdn_remote_addressing() {
 }
 
 function get_clean_url( $secret ) {
-	$replaceKeys = array( "?refresh=${secret}","&refresh=${secret}" );
+	$replace_keys = array( "?refresh=${secret}","&refresh=${secret}" );
 	$url = "http://${_SERVER['HTTP_HOST']}${_SERVER['REQUEST_URI']}";
-	$current_url = str_replace( $replaceKeys, '', $url );
+	$current_url = str_replace( $replace_keys, '', $url );
 	return $current_url;
 }
 
 $debug         = true;
 $cache         = true;
-$websiteIp     = '127.0.0.1';
+$server_ip     = '127.0.0.1';
 $reddis_server = '127.0.0.1';
 $secret_string = 'changeme';
 $current_url   = get_clean_url( $secret_string );
@@ -73,7 +73,7 @@ try {
 	}
 
 	//Either manual refresh cache by adding ?refresh=secret_string after the URL or somebody posting a comment
-	if ( refresh_has_secret( $secret_string ) || request_has_secret( $secret_string ) || is_remote_page_load( $current_url, $websiteIp ) ) {
+	if ( refresh_has_secret( $secret_string ) || request_has_secret( $secret_string ) || is_remote_page_load( $current_url, $server_ip ) ) {
 		if ( $debug ) {
 			echo "<!-- manual refresh was required -->\n";
 		}
@@ -82,7 +82,7 @@ try {
 
 		require('./wp-blog-header.php');
 
-		$unlimited           = get_option( 'wp-redis-cache-debug', false   );
+		$unlimited           = get_option( 'wp-redis-cache-debug',   false );
 		$seconds_cache_redis = get_option( 'wp-redis-cache-seconds', 43200 );
 
 	// This page is cached, lets display it
@@ -93,19 +93,19 @@ try {
 
 		$cache  = true;
 
-		$html_of_page = $redis->get($redis_key);
+		$html_of_page = $redis->get( $redis_key );
 		echo $html_of_page;
 
 	// If the cache does not exist lets display the user the normal page without cache, and then fetch a new cache page
-	} elseif ( $_SERVER['REMOTE_ADDR'] != $websiteIp && false === strstr( $current_url, 'preview=true' ) ) {
+	} elseif ( $_SERVER['REMOTE_ADDR'] != $server_ip && false === strstr( $current_url, 'preview=true' ) ) {
 		if ( $debug ) {
 			echo "<!-- displaying page without cache -->\n";
 		}
 
-		$isPOST = (int) 'POST' === $_SERVER['REQUEST_METHOD'];
+		$is_post  = (int) 'POST' === $_SERVER['REQUEST_METHOD'];
+		$logged_in = preg_match( "/wordpress_logged_in/", var_export( $_COOKIE, true ) );
 
-		$loggedIn = preg_match( "/wordpress_logged_in/", var_export( $_COOKIE, true ) );
-		if ( ! $isPOST && ! $loggedIn ) {
+		if ( ! $is_post && ! $logged_in ) {
 			ob_start();
 			require('./wp-blog-header.php');
 			$html_of_page = ob_get_contents();
@@ -128,7 +128,7 @@ try {
 		} else { //either the user is logged in, or is posting a comment, show them uncached
 			require('./wp-blog-header.php');
 		}
-	} elseif ( $_SERVER['REMOTE_ADDR'] != $websiteIp && true === strstr( $current_url, 'preview=true' ) ) {
+	} elseif ( $_SERVER['REMOTE_ADDR'] != $server_ip && true === strstr( $current_url, 'preview=true' ) ) {
 		require('./wp-blog-header.php');
 	}
 	 // else {   // This is what your server should get if no cache exists  //deprecated, as the ob_start() is cleaner
@@ -148,7 +148,7 @@ if ( $debug ) {
 		echo "<!-- wp-redis-cache-seconds  = " . $seconds_cache_redis . " -->\n";
 	}
 	echo "<!-- wp-redis-cache-secret  = " . $secret_string . "-->\n";
-	echo "<!-- wp-redis-cache-ip  = " . $websiteIp . "-->\n";
+	echo "<!-- wp-redis-cache-ip  = " . $server_ip . "-->\n";
 	if ( isset( $unlimited ) ) {
 		echo "<!-- wp-redis-cache-unlimited = " . $unlimited . "-->\n";
 	}
