@@ -3,34 +3,34 @@
 // Start the timer so we can track the page load time
 $start = microtime();
 
-function getMicroTime($time) {
+function get_micro_time($time) {
 	list($usec, $sec) = explode(" ", $time);
 	return ((float) $usec + (float) $sec);
 }
 
-function refreshHasSecret($secret) {
+function refresh_has_secret($secret) {
 	return isset($_GET['refresh']) && $_GET['refresh'] == $secret;
 }
 
-function requestHasSecret($secret) {
+function request_has_secret($secret) {
 	return strpos($_SERVER['REQUEST_URI'],"refresh=${secret}")!==false;
 }
 
-function isRemotePageLoad($currentUrl, $websiteIp) {
+function is_remote_page_load($currentUrl, $websiteIp) {
 	return (isset($_SERVER['HTTP_REFERER'])
 			&& $_SERVER['HTTP_REFERER']== $currentUrl
 			&& $_SERVER['REQUEST_URI'] != '/'
 			&& $_SERVER['REMOTE_ADDR'] != $websiteIp);
 }
 
-function handleCDNRemoteAddressing() {
+function handle_cdn_remote_addressing() {
 	// so we don't confuse the cloudflare server
 	if (isset($_SERVER['HTTP_CF_CONNECTING_IP'])) {
 		$_SERVER['REMOTE_ADDR'] = $_SERVER['HTTP_CF_CONNECTING_IP'];
 	}
 }
 
-function getCleanUrl($secret) {
+function get_clean_url($secret) {
 	$replaceKeys = array("?refresh=${secret}","&refresh=${secret}");
 	$url = "http://${_SERVER['HTTP_HOST']}${_SERVER['REQUEST_URI']}";
 	$current_url = str_replace($replaceKeys, '', $url);
@@ -42,10 +42,10 @@ $cache		  = true;
 $websiteIp	  = '127.0.0.1';
 $reddis_server  = '127.0.0.1';
 $secret_string  = 'changeme';
-$current_url	= getCleanUrl($secret_string);
+$current_url	= get_clean_url($secret_string);
 $redis_key	  = md5($current_url);
 
-handleCDNRemoteAddressing();
+handle_cdn_remote_addressing();
 
 if(!defined('WP_USE_THEMES')) {
 	define('WP_USE_THEMES', true);
@@ -72,7 +72,7 @@ try {
 	}
 
 	//Either manual refresh cache by adding ?refresh=secret_string after the URL or somebody posting a comment
-	if (refreshHasSecret($secret_string) || requestHasSecret($secret_string) || isRemotePageLoad($current_url, $websiteIp)) {
+	if (refresh_has_secret($secret_string) || request_has_secret($secret_string) || is_remote_page_load($current_url, $websiteIp)) {
 		if ($debug) {
 			echo "<!-- manual refresh was required -->\n";
 		}
@@ -136,7 +136,7 @@ try {
 }
 
 $end  = microtime();
-$time = (@getMicroTime($end) - @getMicroTime($start));
+$time = (@get_micro_time($end) - @get_micro_time($start));
 if ($debug) {
 	echo "<!-- Cache system by Benjamin Adams. Page generated in " . round($time, 5) . " seconds. -->\n";
 	echo "<!-- Site was cached  = " . $cache . " -->\n";
