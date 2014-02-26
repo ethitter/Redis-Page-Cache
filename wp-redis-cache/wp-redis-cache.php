@@ -123,7 +123,7 @@ class WP_Redis_Cache {
 	private $ns = 'wp-redis-cache';
 
 	/**
-	 *
+	 * Singleton instantiation
 	 */
 	public static function get_instance() {
 		if ( ! is_a( self::$__instance, __CLASS__ ) ) {
@@ -161,12 +161,9 @@ class WP_Redis_Cache {
 	 * @return null
 	 */
 	public function register_ui() {
-		// If cache life is set globally, don't show the UI
-		global $wp_redis_cache_config;
-		if ( is_array( $wp_redis_cache_config ) &&
-			( isset( $wp_redis_cache_config['cache_duration' ] ) || isset( $wp_redis_cache_config['unlimited' ] ) )
-		) {
-			return;
+		// Don't show UI
+		if ( defined( 'WP_REDIS_CACHE_HIDE_UI' ) && WP_REDIS_CACHE_HIDE_UI ) {
+			return
 		}
 
 		add_options_page( 'WP Redis Cache', 'WP Redis Cache', 'manage_options', $this->ns, array( $this, 'render_ui' ) );
@@ -232,10 +229,14 @@ class WP_Redis_Cache {
 			);
 
 			// Override default connection settings with global values, when present
-			global $wp_redis_cache_config;
-			if ( is_array( $wp_redis_cache_config ) ) {
-				$_redis_settings = array_intersect( $wp_redis_cache_config, $redis_settings );
-				$redis_settings = wp_parse_args( $_redis_settings, $redis_settings );
+			if ( defined( 'WP_REDIS_CACHE_REDIS_HOST' ) ) {
+				$redis_settings['host'] = WP_REDIS_CACHE_REDIS_HOST;
+			}
+			if ( defined( 'WP_REDIS_CACHE_REDIS_PORT' ) ) {
+				$redis_settings['port'] = WP_REDIS_CACHE_REDIS_PORT;
+			}
+			if ( defined( 'WP_REDIS_CACHE_REDIS_DB' ) ) {
+				$redis_settings['database'] = WP_REDIS_CACHE_REDIS_DB;
 			}
 
 			$permalink = get_permalink( $post->ID );
