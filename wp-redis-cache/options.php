@@ -37,10 +37,10 @@ Move the `index.php` to the root/base WordPress directory.  Or manually change t
 
 ```php
 <?php
-require('index-wp-redis.php');
+require 'index-wp-redis.php';
 ?>
 ```
-In `index-wp-redis.php` change `$ip_of_your_website` to the IP of your server
+In `index-wp-redis.php` change `$server_ip` to the IP of your server
 
 *Note: Sometimes when you upgrade WordPress it will replace over your `index.php` file and you will have to redo this step.  This is the reason we don't just replace the contents of `index-wp-redis.php` with `index.php`.
 
@@ -116,10 +116,10 @@ We do this because WordPress is no longer in charge of displaying our posts.  Re
 
 
 //Custom Theme Settings
-add_action('admin_menu', 'add_redis_interface');
+add_action( 'admin_menu', 'add_redis_interface' );
 
 function add_redis_interface() {
-	add_options_page('WP Redis Cache', 'WP Redis Cache', '8', 'functions', 'edit_redis_options');
+	add_options_page( 'WP Redis Cache', 'WP Redis Cache', 'manage_options', 'wp-redis-cache', 'edit_redis_options' );
 }
 
 function edit_redis_options() {
