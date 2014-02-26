@@ -156,15 +156,6 @@ function wp_redis_cache_connect_redis() {
 }
 
 /**
- * Shortcut to load WP
- *
- * @return null
- */
-function wp_redis_cache_load_wp() {
-	require_once dirname( __FILE__ ) . '/wp-blog-header.php';
-}
-
-/**
  * BEGIN CACHING LOGIC
  */
 
@@ -200,7 +191,7 @@ try {
 
 		$redis->del( $GLOBALS['wp_redis_cache_config']['redis_key'] );
 
-		// wp_redis_cache_load_wp();
+		// require_once dirname( __FILE__ ) . '/wp-blog-header.php';
 	// This page is cached, the user isn't logged in, and it isn't a POST request, so let's use the cache
 	} elseif ( ! $is_post && ! $logged_in && $redis->exists( $GLOBALS['wp_redis_cache_config']['redis_key'] ) ) {
 		if ( $GLOBALS['wp_redis_cache_config']['debug'] ) {
@@ -226,7 +217,7 @@ try {
 
 				// Render page into an output buffer and display
 				ob_start();
-				wp_redis_cache_load_wp();
+				require_once dirname( __FILE__ ) . '/wp-blog-header.php';
 				$markup_to_cache = trim( ob_get_clean() );
 				echo $markup_to_cache;
 
@@ -259,21 +250,21 @@ try {
 					}
 				}
 			} /*else {
-				wp_redis_cache_load_wp();
+				require_once dirname( __FILE__ ) . '/wp-blog-header.php';
 			}*/
 		} /*else {
-			wp_redis_cache_load_wp();
+			require_once dirname( __FILE__ ) . '/wp-blog-header.php';
 		}*/
 	} /*else {
-		wp_redis_cache_load_wp();
+		require_once dirname( __FILE__ ) . '/wp-blog-header.php';
 	}*/
 
 	// The current request wasn't served from cache or isn't cacheable, so we pass off to WP
 	if ( $load_wp ) {
-		wp_redis_cache_load_wp();
+		require_once dirname( __FILE__ ) . '/wp-blog-header.php';
 	}
 } catch ( Exception $e ) {
-	wp_redis_cache_load_wp();
+	require_once dirname( __FILE__ ) . '/wp-blog-header.php';
 	wp_redis_cache_exception_handler( $e );
 }
 
