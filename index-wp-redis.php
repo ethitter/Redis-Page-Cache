@@ -160,7 +160,7 @@ function wp_redis_cache_get_device_type() {
 		false !== stripos( $ua, 'Silk/'      ) ||
 		false !== stripos( $ua, 'Kindle'     ) ||
 		false !== stripos( $ua, 'PlayBook'   ) ||
-		false !== stripos( $ua, 'RIM Tablet' ) ||
+		false !== stripos( $ua, 'RIM Tablet' )
 	) {
 		return 'tablet';
 	}
