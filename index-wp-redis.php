@@ -327,7 +327,7 @@ try {
 if ( $wp_redis_cache_config['debug'] ) {
 	$end  = microtime();
 	$time = @wp_redis_cache_get_micro_time( $end ) - @wp_redis_cache_get_micro_time( $start );
-	$wp_redis_cache_config['debug_messages'] .= "<!-- Cache system by Benjamin Adams. Page generated in " . round($time, 5) . " seconds. -->\n";
+	$wp_redis_cache_config['debug_messages'] .= "<!-- Cache system by Erick Hitter. Page generated in " . round($time, 5) . " seconds. -->\n";
 	$wp_redis_cache_config['debug_messages'] .= "<!-- Site was cached = " . $wp_redis_cache_config['cached'] . " -->\n";
 	if ( isset( $wp_redis_cache_config['cache_duration'] ) ) {
 		$wp_redis_cache_config['debug_messages'] .= "<!-- wp-redis-cache-seconds = " . $wp_redis_cache_config['cache_duration'] . " -->\n";

@@ -1,117 +1,26 @@
 <?php
 /*
 Plugin Name: WP Redis Cache
-Plugin URI: https://github.com/BenjaminAdams/wp-redis-cache
-Version: 1.1
+Plugin URI: https://github.com/ethitter/wp-redis-cache
+Version: 1.0
 Description: Manage settings for full-page caching powered by Redis.
-Author: Benjamin Adams & Erick Hitter
-Author URI: http://dudelol.com
+Author: Erick Hitter
+Author URI: https://ethitter.com/
 
-Cache WordPress using Redis, the fastest way to date to cache WordPress.
+This software is based heavily on work of the same name by Benjamin Adams, copyright 2013.
 
-== Description ==
-## WP Redis Cache
-------
-Cache WordPress using Redis, the fastest way to date to cache WordPress.
+This program is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License, version 2, as
+published by the Free Software Foundation.
 
-Please see [https://github.com/BenjaminAdams/wp-redis-cache](https://github.com/BenjaminAdams/wp-redis-cache) for the latest information and other needed setup files.
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
 
-### Requirements
-------
-* [WordPress](http://wordpress.org) - CMS framework/blogging system
-* [Redis](http://redis.io/) - Key Value in memory caching
-* [Predis](https://github.com/nrk/predis) - PHP api for Redis
-
-== Installation ==
-Install Redis, must have root access to your machine. On debian it's as simple as:
-```bash
-sudo apt-get install redis-server
-```
-On other systems please refer to the [Redis website](http://redis.io/).
-
-Move the folder wp-redis-cache to the plugin directory and activate the plugin.  In the admin section you can set how long you will cache the post for.  By default it will cache the post for 12 hours.
-Note: This plugin is optional and is used to refresh the cache after you update a post/page
-
-Move the `index-wp-redis.php` to the root/base WordPress directory.
-
-Move the `index.php` to the root/base WordPress directory.  Or manually change the `index.php` to:
-
-```php
-<?php
-require 'index-wp-redis.php';
-?>
-```
-In `index-wp-redis.php` change `$server_ip` to the IP of your server
-
-*Note: Sometimes when you upgrade WordPress it will replace over your `index.php` file and you will have to redo this step.  This is the reason we don't just replace the contents of `index-wp-redis.php` with `index.php`.
-
-We do this because WordPress is no longer in charge of displaying our posts.  Redis will now server the post if it is in the cache.  If the post is not in the Redis cache it will then call WordPress to serve the page and then cache it for the next pageload
-
-
-### Benchmark
-------
-I welcome you to compare the page load times of this caching system with other popular Caching plugins such as [WP Super Cache](http://wordpress.org/plugins/wp-super-cache/) and [W3 Total Cache](http://wordpress.org/plugins/w3-total-cache/)
-
-With a fresh WordPress install:
-
-WP Super Cache
-```
-Page generated in 0.318 seconds.
-```
-
-W3 Total Cache
-```
-Page generated in 0.30484 seconds.
-```
-
-WP Redis Cache
-```
-Page generated in 0.00902 seconds.
-```
-
-
-== Installation ==
-
-== Installation ==
-------
-Install Redis, must have root access to your machine. On debian it's as simple as:
-```bash
-sudo apt-get install redis-server
-```
-On other systems please refer to the [Redis website](http://redis.io/).
-
-Move the folder wp-redis-cache to the plugin directory and activate the plugin.  In the admin section you can set how long you will cache the post for.  By default it will cache the post for 12 hours.
-Note: This plugin is optional and is used to refresh the cache after you update a post/page
-
-Move the `index-wp-redis.php` to the root/base WordPress directory.
-
-Move the `index.php` to the root/base WordPress directory.  Or manually change the `index.php` to:
-
-```php
-<?php
-require('index-wp-redis.php');
-?>
-```
-In `index-wp-redis.php` change `$ip_of_your_website` to the IP of your server
-
-*Note: Sometimes when you upgrade WordPress it will replace over your `index.php` file and you will have to redo this step.  This is the reason we don't just replace the contents of `index-wp-redis.php` with `index.php`.
-
-We do this because WordPress is no longer in charge of displaying our posts.  Redis will now server the post if it is in the cache.  If the post is not in the Redis cache it will then call WordPress to serve the page and then cache it for the next pageload
-
-/*  Copyright 2013  Benjamin Adams  (email : ben@dudelol.com)
-
-	This program is free software; you can redistribute it and/or modify
-	it under the terms of the GNU General Public License, version 2, as
-	published by the Free Software Foundation.
-
-	This program is distributed in the hope that it will be useful,
-	but WITHOUT ANY WARRANTY; without even the implied warranty of
-	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-	GNU General Public License for more details.
-
-	You should have received a copy of the GNU General Public License
-	along with this program; if not, write to the Free Software
-	Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+You should have received a copy of the GNU General Public License
+along with this program; if not, write to the Free Software
+Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 */
 
