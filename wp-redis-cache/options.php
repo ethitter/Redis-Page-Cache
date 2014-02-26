@@ -1,6 +1,6 @@
 <?php
 /*
-Plugin Name: Wp Redis Cache
+Plugin Name: WP Redis Cache
 Plugin URI: https://github.com/BenjaminAdams/wp-redis-cache
 Version: 1.0
 Author: Benjamin Adams
@@ -9,7 +9,7 @@ Author URI: http://dudelol.com
 Cache WordPress using Redis, the fastest way to date to cache WordPress.
 
 == Description ==
-## Wp Redis Cache
+## WP Redis Cache
 ------
 Cache WordPress using Redis, the fastest way to date to cache WordPress.
 
@@ -49,11 +49,11 @@ We do this because WordPress is no longer in charge of displaying our posts.  Re
 
 ### Benchmark
 ------
-I welcome you to compare the page load times of this caching system with other popular Caching plugins such as [Wp Super Cache](http://wordpress.org/plugins/wp-super-cache/) and [W3 Total Cache](http://wordpress.org/plugins/w3-total-cache/)
+I welcome you to compare the page load times of this caching system with other popular Caching plugins such as [WP Super Cache](http://wordpress.org/plugins/wp-super-cache/) and [W3 Total Cache](http://wordpress.org/plugins/w3-total-cache/)
 
 With a fresh WordPress install:
 
-Wp Super Cache
+WP Super Cache
 ```
 Page generated in 0.318 seconds.
 ```
@@ -63,7 +63,7 @@ W3 Total Cache
 Page generated in 0.30484 seconds.
 ```
 
-Wp Redis Cache
+WP Redis Cache
 ```
 Page generated in 0.00902 seconds.
 ```
@@ -119,13 +119,13 @@ We do this because WordPress is no longer in charge of displaying our posts.  Re
 add_action('admin_menu', 'add_redis_interface');
 
 function add_redis_interface() {
-    add_options_page('Wp Redis Cache', 'Wp Redis Cache', '8', 'functions', 'edit_redis_options');
+    add_options_page('WP Redis Cache', 'WP Redis Cache', '8', 'functions', 'edit_redis_options');
 }
 
 function edit_redis_options() {
     ?>
     <div class='wrap'>
-    <h2>Wp-Redis Options</h2>
+    <h2>WP-Redis Options</h2>
     <form method="post" action="options.php">
     <?php wp_nonce_field('update-options') ?>
 

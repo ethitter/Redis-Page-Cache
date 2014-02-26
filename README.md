@@ -1,4 +1,4 @@
-## Wp Redis Cache
+## WP Redis Cache
 
 Cache WordPress using Redis, the fastest way to date to cache WordPress.
 
@@ -43,11 +43,11 @@ We do this because WordPress is no longer in charge of displaying our posts.  Re
 
 ### Benchmark
 ------
-I welcome you to compare the page load times of this caching system with other popular Caching plugins such as [Wp Super Cache](http://wordpress.org/plugins/wp-super-cache/) and [W3 Total Cache](http://wordpress.org/plugins/w3-total-cache/)
+I welcome you to compare the page load times of this caching system with other popular Caching plugins such as [WP Super Cache](http://wordpress.org/plugins/wp-super-cache/) and [W3 Total Cache](http://wordpress.org/plugins/w3-total-cache/)
 
 With a fresh WordPress install:
 
-Wp Super Cache
+WP Super Cache
 ```
 Page generated in 0.318 seconds.
 ```
@@ -57,7 +57,7 @@ W3 Total Cache
 Page generated in 0.30484 seconds.
 ```
 
-Wp Redis Cache
+WP Redis Cache
 ```
 Page generated in 0.00902 seconds.
 ```
