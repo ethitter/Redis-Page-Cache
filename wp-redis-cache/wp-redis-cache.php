@@ -114,15 +114,15 @@ We do this because WordPress is no longer in charge of displaying our posts.  Re
 
 */
 
-
-//Custom Theme Settings
-add_action( 'admin_menu', 'add_redis_interface' );
-
-function add_redis_interface() {
-	add_options_page( 'WP Redis Cache', 'WP Redis Cache', 'manage_options', 'wp-redis-cache', 'edit_redis_options' );
+/**
+ * Register plugin options page
+ */
+function wp_redis_cache_add_ui() {
+	add_options_page( 'WP Redis Cache', 'WP Redis Cache', 'manage_options', 'wp-redis-cache', 'wp_redis_cache_render_options_screen' );
 }
+add_action( 'admin_menu', 'wp_redis_cache_add_ui' );
 
-function edit_redis_options() {
+function wp_redis_cache_render_options_screen() {
 	?>
 	<div class='wrap'>
 	<h2>WP-Redis Options</h2>
@@ -152,72 +152,23 @@ function edit_redis_options() {
 	<?php
 }
 
-add_action('transition_post_status', 'refresh_wp_redis_cache',10,3);
-add_action('wp_ajax_clear_wp_redis_cache', 'clear_wp_redis_cache');
-add_action( 'admin_footer', 'clear_wp_redis_cache_javascript' );
-//clears the cache after you update a post
-function refresh_wp_redis_cache( $new, $old, $post )
-{
-
-	if($new == "publish")
-	{
+/**
+ *
+ */
+function wp_redis_cache_refresh_on_publish( $new, $old, $post ) {
+	if ( in_array( 'publish', array( $new, $old ) ) ) {
 		$permalink = get_permalink( $post->ID );
 
-		// aaronstpierre: this needs to be include_once so as not to cauase a redeclaration error
-		include_once("predis5.2.php");  //we need this to use Redis inside of PHP
+		include_once dirname( __FILE__ ) . '/predis5.2.php';  //we need this to use Redis inside of PHP
 		$redis = new Predis_Client();
 
-		$redis_key = md5($permalink);
-		$redis->del($redis_key);
+		$redis_key = md5( $permalink );
+		$redis->del( $redis_key );
 
 		//refresh the front page
-		$frontPage = get_home_url() . "/";
-		$redis_key = md5($frontPage);
-		$redis->del($redis_key);
+		$front_page = get_home_url( '/' );
+		$redis_key = md5( $front_page );
+		$redis->del( $redis_key );
 	}
 }
-
-// clears the whole cache
-function clear_wp_redis_cache()
-{
-	include_once("predis5.2.php"); //we need this to use Redis inside of PHP
-	$args = array( 'post_type' => 'any', 'posts_per_page' => -1);
-	$wp_query = new WP_Query( $args); // to get all Posts
-	$redis = new Predis_Client();
-	// Loop all posts and clear the cache
-	$i = 0;
-	while ( $wp_query->have_posts() ) : $wp_query->the_post();
-		$permalink = get_permalink();
-
-		$redis_key = md5($permalink);
-		if (($redis->exists($redis_key)) == true ) {
-			$redis->del($redis_key);
-			$i++;
-		}
-
-
-	endwhile;
-
-	echo $i++." of " . $wp_query  -> found_posts . " posts was cleared in cache";
-	die();
-}
-
-function clear_wp_redis_cache_javascript() {
-?>
-<script type="text/javascript" >
-jQuery(document).ready(function($) {
-
-	jQuery('#WPRedisClearCache').click(function(){
-		var data = {
-			action: 'clear_wp_redis_cache',
-		};
-
-		// since 2.8 ajaxurl is always defined in the admin header and points to admin-ajax.php
-		$.post(ajaxurl, data, function(response) {
-			alert(response);
-		});
-	});
-});
-</script>
-<?php
-}
+add_action('transition_post_status', 'wp_redis_cache_refresh_on_publish',10,3);
