@@ -8,7 +8,7 @@
  */
 $GLOBALS['wp_redis_cache_config'] = array(
 	'debug'         => false,
-	'cache'         => true,
+	'cache'         => false,
 	'server_ip'     => '127.0.0.1',
 	'redis_server'  => '127.0.0.1',
 	'redis_port'    => 6379,
@@ -225,7 +225,7 @@ try {
 			echo "<!-- serving page from cache: key: " . $GLOBALS['wp_redis_cache_config']['redis_key'] . " -->\n";
 		}
 
-		$GLOBALS['wp_redis_cache_config']['cache'] = true;
+		$GLOBALS['wp_redis_cache_config']['cached'] = true;
 
 		$html_of_page = trim( $redis->get( $GLOBALS['wp_redis_cache_config']['redis_key'] ) );
 		echo $html_of_page;
@@ -242,7 +242,7 @@ $end  = microtime();
 $time = @wp_redis_cache_get_micro_time( $end ) - @wp_redis_cache_get_micro_time( $start );
 if ( $GLOBALS['wp_redis_cache_config']['debug'] ) {
 	echo "<!-- Cache system by Benjamin Adams. Page generated in " . round($time, 5) . " seconds. -->\n";
-	echo "<!-- Site was cached = " . $GLOBALS['wp_redis_cache_config']['cache'] . " -->\n";
+	echo "<!-- Site was cached = " . $GLOBALS['wp_redis_cache_config']['cached'] . " -->\n";
 	if ( isset( $GLOBALS['wp_redis_cache_config']['cache_duration'] ) ) {
 		echo "<!-- wp-redis-cache-seconds = " . $GLOBALS['wp_redis_cache_config']['cache_duration'] . " -->\n";
 	}
