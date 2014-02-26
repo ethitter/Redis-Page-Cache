@@ -90,26 +90,14 @@ try {
 
 		$unlimited           = get_option( 'wp-redis-cache-debug',   false );
 		$seconds_cache_redis = get_option( 'wp-redis-cache-seconds', 43200 );
-
-	// This page is cached, lets display it
-	} elseif ( $redis->exists( $redis_key ) ) {
-		if ( $debug ) {
-			echo "<!-- serving page from cache: key: $redis_key -->\n";
-		}
-
-		$cache  = true;
-
-		$html_of_page = trim( $redis->get( $redis_key ) );
-		echo $html_of_page;
-
 	// If the cache does not exist lets display the user the normal page without cache, and then fetch a new cache page
 	} elseif ( $_SERVER['REMOTE_ADDR'] != $server_ip && false === strstr( $current_url, 'preview=true' ) ) {
 		if ( $debug ) {
 			echo "<!-- displaying page without cache -->\n";
 		}
 
-		$is_post   = (int) 'POST' === $_SERVER['REQUEST_METHOD'];
-		$logged_in = preg_match( "/wordpress_logged_in/", var_export( $_COOKIE, true ) );
+		$is_post   = (bool) 'POST' === $_SERVER['REQUEST_METHOD'];
+		$logged_in = (bool) preg_match( "#(wordpress_(logged|sec)|comment_author)#", var_export( $_COOKIE, true ) );
 
 		if ( ! $is_post && ! $logged_in ) {
 			ob_start();
@@ -123,7 +111,7 @@ try {
 
 			// When a page displays after an "HTTP 404: Not Found" error occurs, do not cache
 			// When the search was used, do not cache
-			if ( ! is_404() && ! is_search() )  {
+			if ( ! is_404() && ! is_search() ) {
 				if ( $unlimited ) {
 					$redis->set( $redis_key, $html_of_page );
 				} else {
@@ -135,6 +123,17 @@ try {
 		}
 	} elseif ( $_SERVER['REMOTE_ADDR'] != $server_ip && true === strstr( $current_url, 'preview=true' ) ) {
 		require dirname( __FILE__ ) . '/wp-blog-header.php';
+	// This page is cached, lets display it
+	} elseif ( $redis->exists( $redis_key ) ) {
+		if ( $debug ) {
+			echo "<!-- serving page from cache: key: $redis_key -->\n";
+		}
+
+		$cache  = true;
+
+		$html_of_page = trim( $redis->get( $redis_key ) );
+		echo $html_of_page;
+
 	} else {
 		require dirname( __FILE__ ) . '/wp-blog-header.php';
 	}
