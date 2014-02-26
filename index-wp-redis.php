@@ -42,11 +42,9 @@ if ( $wp_redis_cache_config['debug'] ) {
 }
 
 /**
- * MOBILE HANDLING
+ * SET SEPARATE CACHES FOR BROAD DEVICE TYPES
  */
-if ( wp_redis_cache_is_mobile_request() ) {
-	$wp_redis_cache_config['redis_key'] = 'MO-' . $wp_redis_cache_config['redis_key'];
-}
+$wp_redis_cache_config['redis_key'] = wp_redis_cache_set_device_key( $wp_redis_cache_config['redis_key'] );
 
 /**
  * UTILITY FUNCTIONS
@@ -119,10 +117,66 @@ function wp_redis_cache_get_clean_url( $secret ) {
 }
 
 /**
+ * Prefix cache key if device calls for separate caching
  *
+ * @param string $key
+ * @return $string
  */
-function wp_redis_cache_is_mobile_request() {
-	return false;
+function wp_redis_cache_set_device_key( $key ) {
+	switch ( wp_redis_cache_get_device_type() ) {
+		case 'tablet' :
+			$prefix = 'T-';
+			break;
+		case 'mobile' :
+			$prefix = 'M-';
+			break;
+		default :
+		case 'desktop' :
+			$prefix = '';
+			break;
+	}
+
+	return $prefix . $key;
+}
+
+/**
+ * Determine the current device type from its user agent
+ * Allows for separate caches for tablet, mobile, and desktop visitors
+ *
+ * @return string
+ */
+function wp_redis_cache_get_device_type() {
+	$ua = $_SERVER['HTTP_USER_AGENT'];
+
+	if ( empty( $ua ) ) {
+		return 'desktop';
+	}
+
+	// Tablet user agents
+	if (
+		false !== stripos( $ua, 'ipad'       ) ||
+		( false !== stripos( $ua, 'Android'  ) && false === stripos( $ua, 'mobile' ) ) ||
+		false !== stripos( $ua, 'tablet '    ) ||
+		false !== stripos( $ua, 'Silk/'      ) ||
+		false !== stripos( $ua, 'Kindle'     ) ||
+		false !== stripos( $ua, 'PlayBook'   ) ||
+		false !== stripos( $ua, 'RIM Tablet' ) ||
+	) {
+		return 'tablet';
+	}
+
+	// Mobile user agents
+	if (
+		false !== stripos( $ua, 'Mobile'     ) || // many mobile devices (all iPhone, iPad, etc.)
+		false !== stripos( $ua, 'Android'    ) ||
+		false !== stripos( $ua, 'BlackBerry' ) ||
+		false !== stripos( $ua, 'Opera Mini' ) ||
+		false !== stripos( $ua, 'Opera Mobi' )
+	) {
+		return 'mobile';
+	}
+
+	return 'desktop';
 }
 
 /**
@@ -143,10 +197,10 @@ function wp_redis_cache_connect_redis() {
 
 		$redis = new Redis();
 
-		// Sockets can be used as well. Documentation @ https://github.com/nicolasff/phpredis/#connection
 		$redis->connect( $wp_redis_cache_config['redis_server'], $wp_redis_cache_config['redis_port'] );
 		$redis->select( $wp_redis_cache_config['redis_db'] );
-	} else { // Fallback to predis5.2.php
+	// Fallback to predis5.2.php
+	} else {
 		if ( $wp_redis_cache_config['debug'] ) {
 			$wp_redis_cache_config['debug_messages'] .= "<!-- using predis as a backup -->\n";
 		}
