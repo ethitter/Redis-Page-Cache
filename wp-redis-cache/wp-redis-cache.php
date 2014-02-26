@@ -114,61 +114,108 @@ We do this because WordPress is no longer in charge of displaying our posts.  Re
 
 */
 
-/**
- * Register plugin options page
- */
-function wp_redis_cache_add_ui() {
-	add_options_page( 'WP Redis Cache', 'WP Redis Cache', 'manage_options', 'wp-redis-cache', 'wp_redis_cache_render_options_screen' );
-}
-add_action( 'admin_menu', 'wp_redis_cache_add_ui' );
+class WP_Redis_Cache {
+	// Hold singleton instance
+	private static $__instance = null;
 
-function wp_redis_cache_render_options_screen() {
-	?>
-	<div class='wrap'>
-	<h2>WP-Redis Options</h2>
-	<form method="post" action="options.php">
-	<?php wp_nonce_field('update-options') ?>
+	// Regular class variables
+	private $ns = 'wp-redis-cache';
 
-	<p>This plugin does not work out of the box and requires additional steps.<br />
-	Please follow these install instructions: <a target='_blank' href='https://github.com/BenjaminAdams/wp-redis-cache'>https://github.com/BenjaminAdams/wp-redis-cache</a></p>
+	/**
+	 *
+	 */
+	public static function get_instance() {
+		if ( ! is_a( self::$__instance, __CLASS__ ) ) {
+			self::$__instance = new self;
+		}
 
-	<p>If you do not have Redis installed on your machine this will NOT work! </p>
+		return self::$__instance;
+	}
 
-	<p><strong>Seconds of Caching:</strong><br />
-	How many seconds would you like to cache?  *Recommended 12 hours or 43200 seconds <br />
-	<input type="text" name="wp-redis-cache-seconds" size="45" value="<?php echo get_option('wp-redis-cache-seconds'); ?>" /></p>
+	/**
+	 * Register necessary actions
+	 *
+	 * @return null
+	 */
+	private function __construct() {
+		add_action( 'admin_init', array( $this, 'register_options' ) );
+		add_action( 'admin_menu', array( $this, 'register_ui' ) );
+		add_action( 'transition_post_status', array( $this, 'flush_cache' ), 10, 3 );
+	}
 
-	<p><strong>Cache unlimeted:</strong><br />
-		If this options set the cache never expire. This option overiedes the setting "Seconds of Caching"<br />
-	<input type="checkbox" name="wp-redis-cache-unlimited" size="45" value="true" <?php checked('true', get_option('wp-redis-cache-unlimited')); ?>/></p>
+	/**
+	 * Register plugin's settings for proper sanitization
+	 *
+	 * @return null
+	 */
+	public function register_options() {
+		register_setting( $this->ns, 'wp-redis-cache-seconds', 'absint' );
+		register_setting( $this->ns, 'wp-redis-cache-unlimited', 'is_bool' );
+	}
 
-	<p><input type="submit" name="Submit" value="Update Options" /></p>
-	<p><input type="button" id="WPRedisClearCache" name="WPRedisClearCache" value="Clear Cache"></p>
-	<input type="hidden" name="action" value="update" />
-	<input type="hidden" name="page_options" value="wp-redis-cache-seconds,wp-redis-cache-unlimited" />
+	/**
+	 * Register plugin options page
+	 *
+	 * @action admin_menu
+	 * @return null
+	 */
+	public function register_ui() {
+		add_options_page( 'WP Redis Cache', 'WP Redis Cache', 'manage_options', $this->ns, array( $this, 'render_ui' ) );
+	}
 
-	</form>
-	</div>
-	<?php
-}
+	/**
+	 * Render plugin settings screen
+	 *
+	 * @return string
+	 */
+	public function render_ui() {
+		?>
+		<div class='wrap'>
+		<h2>WP Redis Options</h2>
+		<form method="post" action="options.php">
+		<?php settings_fields( $this->ns ); ?>
 
-/**
- *
- */
-function wp_redis_cache_refresh_on_publish( $new, $old, $post ) {
-	if ( in_array( 'publish', array( $new, $old ) ) ) {
-		$permalink = get_permalink( $post->ID );
+			<p>This plugin does not work out of the box and requires additional steps.<br />Please follow these install instructions: <a target='_blank' href='https://github.com/BenjaminAdams/wp-redis-cache'>https://github.com/BenjaminAdams/wp-redis-cache</a></p>
 
-		include_once dirname( __FILE__ ) . '/predis5.2.php';  //we need this to use Redis inside of PHP
-		$redis = new Predis_Client();
+			<p>If you do not have Redis installed on your machine this will NOT work!</p>
 
-		$redis_key = md5( $permalink );
-		$redis->del( $redis_key );
+			<p><strong>Duration of Caching in Seconds:</strong><br />How many seconds would you like to cache individual pages?  *Recommended 12 hours or 43200 seconds <br />
+			<input type="text" name="wp-redis-cache-seconds" size="45" value="<?php echo (int) get_option( 'wp-redis-cache-seconds' ); ?>" /></p>
 
-		//refresh the front page
-		$front_page = get_home_url( '/' );
-		$redis_key = md5( $front_page );
-		$redis->del( $redis_key );
+			<p><strong>Cache without expiration:</strong><br />If this option is set, the cache never expire. This option overides the setting <em>Duration of Caching in Seconds</em>.<br />
+			<input type="checkbox" name="wp-redis-cache-unlimited" size="45" value="true" <?php checked( 'true', (bool) get_option( 'wp-redis-cache-unlimited' ) ); ?>/></p>
+
+			<p><?php submit_button(); ?></p>
+		</form>
+		</div>
+		<?php
+	}
+
+	/**
+	 * On publish, purge cache for individual entry and the homepage
+	 *
+	 * @param string $new_status
+	 * @param string $old_status
+	 * @param object $post
+	 * @action transition_post_status
+	 * @return null
+	 */
+	public function flush_cache( $new_status, $old_status, $post ) {
+		if ( in_array( 'publish', array( $new_status, $old_status ) ) ) {
+			$permalink = get_permalink( $post->ID );
+
+			include_once dirname( __FILE__ ) . '/predis5.2.php'; // we need this to use Redis inside of PHP
+			$redis = new Predis_Client();
+
+			$redis_key = md5( $permalink );
+			$redis->del( $redis_key );
+
+			//refresh the front page
+			$front_page = get_home_url( '/' );
+			$redis_key = md5( $front_page );
+			$redis->del( $redis_key );
+		}
 	}
 }
-add_action('transition_post_status', 'wp_redis_cache_refresh_on_publish',10,3);
+
+WP_Redis_Cache::get_instance();
