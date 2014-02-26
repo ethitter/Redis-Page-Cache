@@ -6,7 +6,7 @@ Version: 1.0
 Author: Benjamin Adams
 Author URI: http://dudelol.com
 
-Cache Wordpress using Redis, the fastest way to date to cache Wordpress. 
+Cache Wordpress using Redis, the fastest way to date to cache Wordpress.
 
 == Description ==
 ## Wp Redis Cache
@@ -100,7 +100,7 @@ We do this because Wordpress is no longer in charge of displaying our posts.  Re
 /*  Copyright 2013  Benjamin Adams  (email : ben@dudelol.com)
 
     This program is free software; you can redistribute it and/or modify
-    it under the terms of the GNU General Public License, version 2, as 
+    it under the terms of the GNU General Public License, version 2, as
     published by the Free Software Foundation.
 
     This program is distributed in the hope that it will be useful,
@@ -111,7 +111,7 @@ We do this because Wordpress is no longer in charge of displaying our posts.  Re
     You should have received a copy of the GNU General Public License
     along with this program; if not, write to the Free Software
     Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
-	
+
 */
 
 
@@ -128,20 +128,20 @@ function edit_redis_options() {
     <h2>Wp-Redis Options</h2>
     <form method="post" action="options.php">
     <?php wp_nonce_field('update-options') ?>
-	
+
 	<p>This plugin does not work out of the box and requires additional steps.<br />
 	Please follow these install instructions: <a target='_blank' href='https://github.com/BenjaminAdams/wp-redis-cache'>https://github.com/BenjaminAdams/wp-redis-cache</a></p>
-	
+
 	<p>If you do not have Redis installed on your machine this will NOT work! </p>
 
     <p><strong>Seconds of Caching:</strong><br />
 	How many seconds would you like to cache?  *Recommended 12 hours or 43200 seconds <br />
     <input type="text" name="wp-redis-cache-seconds" size="45" value="<?php echo get_option('wp-redis-cache-seconds'); ?>" /></p>
- 
+
     <p><strong>Cache unlimeted:</strong><br />
 		If this options set the cache never expire. This option overiedes the setting "Seconds of Caching"<br />
     <input type="checkbox" name="wp-redis-cache-unlimited" size="45" value="true" <?php checked('true', get_option('wp-redis-cache-unlimited')); ?>/></p>
-	  
+
     <p><input type="submit" name="Submit" value="Update Options" /></p>
 	<p><input type="button" id="WPRedisClearCache" name="WPRedisClearCache" value="Clear Cache"></p>
     <input type="hidden" name="action" value="update" />

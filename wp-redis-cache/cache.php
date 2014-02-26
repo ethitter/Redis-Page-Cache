@@ -40,13 +40,13 @@ function clear_wp_redis_cache()
 		$redis_key = md5($permalink);
 		if (($redis->exists($redis_key)) == true ) {
 			$redis->del($redis_key);
-			$i++; 
+			$i++;
 		}
-		
-		
+
+
 	endwhile;
-	
-	echo $i++." of " . $wp_query  -> found_posts . " posts was cleared in cache"; 
+
+	echo $i++." of " . $wp_query  -> found_posts . " posts was cleared in cache";
 	die();
 }
 
@@ -67,7 +67,7 @@ jQuery(document).ready(function($) {
 	});
 });
 </script>
-<?php 
+<?php
 }
 ?>
 

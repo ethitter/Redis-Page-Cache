@@ -192,7 +192,7 @@ class Predis_Client {
             return $this->_connection;
         }
         else {
-            return Predis_Shared_Utils::isCluster($this->_connection) 
+            return Predis_Shared_Utils::isCluster($this->_connection)
                 ? $this->_connection->getConnectionById($id)
                 : $this->_connection;
         }
@@ -460,7 +460,7 @@ abstract class Predis_Command {
         }
 
         if (isset($this->_arguments[0])) {
-            // TODO: should we throw an exception if the command does 
+            // TODO: should we throw an exception if the command does
             //       not support sharding?
             $key = $this->_arguments[0];
 
@@ -533,7 +533,7 @@ abstract class Predis_BulkCommand extends Predis_Command {
         if (is_array($data)) {
             $data = implode($data, ' ');
         }
-        return $command . ' ' . implode($arguments, ' ') . ' ' . strlen($data) . 
+        return $command . ' ' . implode($arguments, ' ') . ' ' . strlen($data) .
             "\r\n" . $data . "\r\n";
     }
 }
@@ -773,11 +773,11 @@ class Predis_ResponseReader implements Predis_IResponseReader {
 
     private function initializePrefixHandlers() {
         $this->_prefixHandlers = array(
-            Predis_Protocol::PREFIX_STATUS     => new Predis_ResponseStatusHandler(), 
-            Predis_Protocol::PREFIX_ERROR      => new Predis_ResponseErrorHandler(), 
-            Predis_Protocol::PREFIX_INTEGER    => new Predis_ResponseIntegerHandler(), 
-            Predis_Protocol::PREFIX_BULK       => new Predis_ResponseBulkHandler(), 
-            Predis_Protocol::PREFIX_MULTI_BULK => new Predis_ResponseMultiBulkHandler(), 
+            Predis_Protocol::PREFIX_STATUS     => new Predis_ResponseStatusHandler(),
+            Predis_Protocol::PREFIX_ERROR      => new Predis_ResponseErrorHandler(),
+            Predis_Protocol::PREFIX_INTEGER    => new Predis_ResponseIntegerHandler(),
+            Predis_Protocol::PREFIX_BULK       => new Predis_ResponseBulkHandler(),
+            Predis_Protocol::PREFIX_MULTI_BULK => new Predis_ResponseMultiBulkHandler(),
         );
     }
 
@@ -909,7 +909,7 @@ class Predis_CommandPipeline {
         if (count($this->_pipelineBuffer) > 0) {
             $connection = $this->_redisClient->getConnection();
             $this->_returnValues = array_merge(
-                $this->_returnValues, 
+                $this->_returnValues,
                 $this->_executor->execute($connection, $this->_pipelineBuffer)
             );
             $this->_pipelineBuffer = array();
@@ -1174,8 +1174,8 @@ class Predis_MultiExecBlock {
     }
 
     private function malformedServerResponse($message) {
-        // Since a MULTI/EXEC block cannot be initialized over a clustered 
-        // connection, we can safely assume that Predis_Client::getConnection() 
+        // Since a MULTI/EXEC block cannot be initialized over a clustered
+        // connection, we can safely assume that Predis_Client::getConnection()
         // will always return an instance of Predis_Connection.
         Predis_Shared_Utils::onCommunicationException(
             new Predis_MalformedServerResponse(
@@ -2391,19 +2391,19 @@ class Predis_Distribution_HashRing implements Predis_Distribution_IDistributionS
     public function add($node, $weight = null) {
         // NOTE: in case of collisions in the hashes of the nodes, the node added
         //       last wins, thus the order in which nodes are added is significant.
-        // TODO: self::DEFAULT_WEIGHT does not work for inherited classes that 
+        // TODO: self::DEFAULT_WEIGHT does not work for inherited classes that
         //       override the DEFAULT_WEIGHT constant.
         $this->_nodes[] = array(
-            'object' => $node, 
-            'weight' => (int) ($weight !== null ? $weight : self::DEFAULT_WEIGHT), 
+            'object' => $node,
+            'weight' => (int) ($weight !== null ? $weight : self::DEFAULT_WEIGHT),
         );
         $this->reset();
     }
 
     public function remove($node) {
-        // NOTE: a node is removed by resetting the ring so that it's recreated from 
-        //       scratch, in order to reassign possible hashes with collisions to the 
-        //       right node according to the order in which they were added in the 
+        // NOTE: a node is removed by resetting the ring so that it's recreated from
+        //       scratch, in order to reassign possible hashes with collisions to the
+        //       right node according to the order in which they were added in the
         //       first place.
         for ($i = 0; $i < count($this->_nodes); ++$i) {
             if ($this->_nodes[$i]['object'] === $node) {
@@ -2493,8 +2493,8 @@ class Predis_Distribution_HashRing implements Predis_Distribution_IDistributionS
     }
 
     protected function wrapAroundStrategy($upper, $lower, $ringKeysCount) {
-        // NOTE: binary search for the last item in _ringkeys with a value 
-        //       less or equal to the key. If no such item exists, return the 
+        // NOTE: binary search for the last item in _ringkeys with a value
+        //       less or equal to the key. If no such item exists, return the
         //       last item.
         return $upper >= 0 ? $upper : $ringKeysCount - 1;
     }
@@ -2525,8 +2525,8 @@ class Predis_Distribution_KetamaPureRing extends Predis_Distribution_HashRing {
     }
 
     protected function wrapAroundStrategy($upper, $lower, $ringKeysCount) {
-        // NOTE: binary search for the first item in _ringkeys with a value 
-        //       greater or equal to the key. If no such item exists, return the 
+        // NOTE: binary search for the first item in _ringkeys with a value
+        //       greater or equal to the key. If no such item exists, return the
         //       first item.
         return $lower < $ringKeysCount ? $lower : 0;
     }
@@ -2584,8 +2584,8 @@ abstract class Predis_Shared_MultiBulkResponseIteratorBase implements Iterator, 
     }
 
     public function count() {
-        // NOTE: use count if you want to get the size of the current multi-bulk 
-        //       response without using iterator_count (which actually consumes 
+        // NOTE: use count if you want to get the size of the current multi-bulk
+        //       response without using iterator_count (which actually consumes
         //       our iterator to calculate the size, and we cannot perform a rewind)
         return $this->_replySize;
     }
@@ -3264,7 +3264,7 @@ class Predis_Commands_Sort extends Predis_MultiBulkCommand {
                 $query[] = $getargs;
             }
         }
-        if (isset($sortParams['LIMIT']) && is_array($sortParams['LIMIT']) 
+        if (isset($sortParams['LIMIT']) && is_array($sortParams['LIMIT'])
             && count($sortParams['LIMIT']) == 2) {
 
             $query[] = 'LIMIT';
@@ -3434,7 +3434,7 @@ class Predis_Commands_Info extends Predis_MultiBulkCommand {
         }
         return $stats;
     }
-} 
+}
 
 class Predis_Commands_Info_v24 extends Predis_Commands_Info {
     public function parseResponse($data) {

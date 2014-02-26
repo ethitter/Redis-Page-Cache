@@ -19,12 +19,12 @@ function requestHasSecret($secret) {
 function isRemotePageLoad($currentUrl, $websiteIp) {
     return (isset($_SERVER['HTTP_REFERER'])
             && $_SERVER['HTTP_REFERER']== $currentUrl
-            && $_SERVER['REQUEST_URI'] != '/' 
+            && $_SERVER['REQUEST_URI'] != '/'
             && $_SERVER['REMOTE_ADDR'] != $websiteIp);
 }
 
 function handleCDNRemoteAddressing() {
-    // so we don't confuse the cloudflare server 
+    // so we don't confuse the cloudflare server
     if (isset($_SERVER['HTTP_CF_CONNECTING_IP'])) {
         $_SERVER['REMOTE_ADDR'] = $_SERVER['HTTP_CF_CONNECTING_IP'];
     }
@@ -61,7 +61,7 @@ try {
 
         // Sockets can be used as well. Documentation @ https://github.com/nicolasff/phpredis/#connection
         $redis->connect($reddis_server);
-        
+
     } else { // Fallback to predis5.2.php
 
         if ($debug) {
@@ -70,7 +70,7 @@ try {
         include_once("wp-content/plugins/wp-redis-cache/predis5.2.php"); //we need this to use Redis inside of PHP
         $redis = new Predis_Client();
     }
-    
+
     //Either manual refresh cache by adding ?refresh=secret_string after the URL or somebody posting a comment
     if (refreshHasSecret($secret_string) || requestHasSecret($secret_string) || isRemotePageLoad($current_url, $websiteIp)) {
         if ($debug) {
@@ -78,7 +78,7 @@ try {
         }
         $redis->del($redis_key);
         require('./wp-blog-header.php');
-        
+
         $unlimited = get_option('wp-redis-cache-debug',false);
         $seconds_cache_redis = get_option('wp-redis-cache-seconds',43200);
     // This page is cached, lets display it
@@ -95,9 +95,9 @@ try {
         if ($debug) {
             echo "<!-- displaying page without cache -->\n";
         }
-        
+
         $isPOST = ($_SERVER['REQUEST_METHOD'] === 'POST') ? 1 : 0;
-        
+
         $loggedIn = preg_match("/wordpress_logged_in/", var_export($_COOKIE, true));
         if (!$isPOST && !$loggedIn) {
             ob_start();
@@ -123,7 +123,7 @@ try {
         } else { //either the user is logged in, or is posting a comment, show them uncached
             require('./wp-blog-header.php');
         }
-        
+
     } else if ($_SERVER['REMOTE_ADDR'] != $websiteIp && strstr($current_url, 'preview=true') == true) {
         require('./wp-blog-header.php');
     }
