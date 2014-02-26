@@ -93,7 +93,7 @@ try {
 
 		$cache  = true;
 
-		$html_of_page = $redis->get( $redis_key );
+		$html_of_page = trim( $redis->get( $redis_key ) );
 		echo $html_of_page;
 
 	// If the cache does not exist lets display the user the normal page without cache, and then fetch a new cache page
@@ -108,8 +108,7 @@ try {
 		if ( ! $is_post && ! $logged_in ) {
 			ob_start();
 			require './wp-blog-header.php';
-			$html_of_page = ob_get_contents();
-			ob_end_clean();
+			$html_of_page = trim( ob_get_clean() );
 			echo $html_of_page;
 
 			if ( ! is_numeric( $seconds_cache_redis ) ) {
