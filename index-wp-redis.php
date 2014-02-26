@@ -70,7 +70,7 @@ try {
 			echo "<!-- using predis as a backup -->\n";
 		}
 
-		include_once( "wp-content/plugins/wp-redis-cache/predis5.2.php" ); //we need this to use Redis inside of PHP
+		include_once dirname( __FILE__ ) . '/wp-content/plugins/wp-redis-cache/predis5.2.php' ); //we need this to use Redis inside of PHP
 		$redis = new Predis_Client( array(
 			'host'     => $redis_server,
 			'port'     => $redis_port,
@@ -123,7 +123,7 @@ try {
 
 			// When a page displays after an "HTTP 404: Not Found" error occurs, do not cache
 			// When the search was used, do not cache
-			if ( ( ! is_404() ) and ( ! is_search() ) )  {
+			if ( ! is_404() && ! is_search() )  {
 				if ( $unlimited ) {
 					$redis->set( $redis_key, $html_of_page );
 				} else {
