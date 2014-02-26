@@ -107,18 +107,13 @@ function wp_redis_cache_get_clean_url( $secret ) {
 }
 
 /**
- * BEGIN CACHING LOGIC
+ * Establish a connection to the Redis server
+ *
+ * Will try the PECL module first, then fall back to PRedis
+ *
+ * @return object
  */
-
-// Set proper IP for proxied requests
-wp_redis_cache_handle_cdn_remote_addressing();
-
-// Ensure WP uses a theme (this is normally set in index.php)
-if ( ! defined( 'WP_USE_THEMES' ) ) {
-	define( 'WP_USE_THEMES', true );
-}
-
-try {
+function wp_redis_cache_connect_redis() {
 	// check if PECL Extension is available
 	if ( class_exists( 'Redis' ) ) {
 		if ( $GLOBALS['wp_redis_cache_config']['debug'] ) {
@@ -142,6 +137,25 @@ try {
 			'database' => $GLOBALS['wp_redis_cache_config']['redis_db'],
 		) );
 	}
+
+	return $redis;
+}
+
+/**
+ * BEGIN CACHING LOGIC
+ */
+
+// Set proper IP for proxied requests
+wp_redis_cache_handle_cdn_remote_addressing();
+
+// Ensure WP uses a theme (this is normally set in index.php)
+if ( ! defined( 'WP_USE_THEMES' ) ) {
+	define( 'WP_USE_THEMES', true );
+}
+
+try {
+	// Establish connection with Redis server
+	$redis = wp_redis_cache_connect_redis();
 
 	//Either manual refresh cache by adding ?refresh=secret_string after the URL or somebody posting a comment
 	if ( wp_redis_cache_refresh_has_secret( $GLOBALS['wp_redis_cache_config']['secret_string'] ) || wp_redis_cache_request_has_secret( $GLOBALS['wp_redis_cache_config']['secret_string'] ) || wp_redis_cache_is_remote_page_load( $GLOBALS['wp_redis_cache_config']['current_url'], $GLOBALS['wp_redis_cache_config']['server_ip'] ) ) {
