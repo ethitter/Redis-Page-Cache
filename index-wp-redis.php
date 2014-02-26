@@ -28,47 +28,47 @@ function wp_redis_cache_exception_handler( $exception ) {
 /**
  * DO NOT EDIT BELOW THIS LINE!
  */
-$GLOBALS['wp_redis_cache_config']['current_url'] = get_clean_url( $GLOBALS['wp_redis_cache_config']['secret_string'] );
+$GLOBALS['wp_redis_cache_config']['current_url'] = wp_redis_cache_get_clean_url( $GLOBALS['wp_redis_cache_config']['secret_string'] );
 $GLOBALS['wp_redis_cache_config']['redis_key']   = md5( $GLOBALS['wp_redis_cache_config']['current_url'] );
 
 // Start the timer so we can track the page load time
 $start = microtime();
 
-function get_micro_time( $time ) {
+function wp_redis_cache_get_micro_time( $time ) {
 	list( $usec, $sec ) = explode( " ", $time );
 	return ( (float) $usec + (float) $sec );
 }
 
-function refresh_has_secret( $secret ) {
+function wp_redis_cache_refresh_has_secret( $secret ) {
 	return isset( $_GET['refresh'] ) && $secret == $_GET['refresh'];
 }
 
-function request_has_secret( $secret ) {
+function wp_redis_cache_request_has_secret( $secret ) {
 	return false !== strpos( $_SERVER['REQUEST_URI'], "refresh=${secret}" );
 }
 
-function is_remote_page_load( $current_url, $server_ip ) {
+function wp_redis_cache_is_remote_page_load( $current_url, $server_ip ) {
 	return ( isset( $_SERVER['HTTP_REFERER'] )
 			&& $_SERVER['HTTP_REFERER'] == $current_url
 			&& $_SERVER['REQUEST_URI'] != '/'
 			&& $_SERVER['REMOTE_ADDR'] != $server_ip );
 }
 
-function handle_cdn_remote_addressing() {
+function wp_redis_cache_handle_cdn_remote_addressing() {
 	// so we don't confuse the cloudflare server
 	if ( isset( $_SERVER['HTTP_CF_CONNECTING_IP'] ) ) {
 		$_SERVER['REMOTE_ADDR'] = $_SERVER['HTTP_CF_CONNECTING_IP'];
 	}
 }
 
-function get_clean_url( $secret ) {
+function wp_redis_cache_get_clean_url( $secret ) {
 	$replace_keys = array( "?refresh=${secret}","&refresh=${secret}" );
 	$url = "http://${_SERVER['HTTP_HOST']}${_SERVER['REQUEST_URI']}";
 	$current_url = str_replace( $replace_keys, '', $url );
 	return $current_url;
 }
 
-handle_cdn_remote_addressing();
+wp_redis_cache_handle_cdn_remote_addressing();
 
 if ( ! defined( 'WP_USE_THEMES' ) ) {
 	define( 'WP_USE_THEMES', true );
@@ -100,7 +100,7 @@ try {
 	}
 
 	//Either manual refresh cache by adding ?refresh=secret_string after the URL or somebody posting a comment
-	if ( refresh_has_secret( $GLOBALS['wp_redis_cache_config']['secret_string'] ) || request_has_secret( $GLOBALS['wp_redis_cache_config']['secret_string'] ) || is_remote_page_load( $GLOBALS['wp_redis_cache_config']['current_url'], $GLOBALS['wp_redis_cache_config']['server_ip'] ) ) {
+	if ( wp_redis_cache_refresh_has_secret( $GLOBALS['wp_redis_cache_config']['secret_string'] ) || wp_redis_cache_request_has_secret( $GLOBALS['wp_redis_cache_config']['secret_string'] ) || wp_redis_cache_is_remote_page_load( $GLOBALS['wp_redis_cache_config']['current_url'], $GLOBALS['wp_redis_cache_config']['server_ip'] ) ) {
 		if ( $GLOBALS['wp_redis_cache_config']['debug'] ) {
 			echo "<!-- manual refresh was required -->\n";
 		}
@@ -181,7 +181,7 @@ try {
 }
 
 $end  = microtime();
-$time = @get_micro_time( $end ) - @get_micro_time( $start );
+$time = @wp_redis_cache_get_micro_time( $end ) - @wp_redis_cache_get_micro_time( $start );
 if ( $GLOBALS['wp_redis_cache_config']['debug'] ) {
 	echo "<!-- Cache system by Benjamin Adams. Page generated in " . round($time, 5) . " seconds. -->\n";
 	echo "<!-- Site was cached = " . $GLOBALS['wp_redis_cache_config']['cache'] . " -->\n";
