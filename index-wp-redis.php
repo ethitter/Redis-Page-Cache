@@ -167,7 +167,7 @@ try {
 			echo "<!-- serving page from cache: key: " . $GLOBALS['wp_redis_cache_config']['redis_key'] . " -->\n";
 		}
 
-		$GLOBALS['wp_redis_cache_config']['cache']  = true;
+		$GLOBALS['wp_redis_cache_config']['cache'] = true;
 
 		$html_of_page = trim( $redis->get( $GLOBALS['wp_redis_cache_config']['redis_key'] ) );
 		echo $html_of_page;
@@ -184,13 +184,13 @@ $end  = microtime();
 $time = @get_micro_time( $end ) - @get_micro_time( $start );
 if ( $GLOBALS['wp_redis_cache_config']['debug'] ) {
 	echo "<!-- Cache system by Benjamin Adams. Page generated in " . round($time, 5) . " seconds. -->\n";
-	echo "<!-- Site was cached  = " . $GLOBALS['wp_redis_cache_config']['cache'] . " -->\n";
+	echo "<!-- Site was cached = " . $GLOBALS['wp_redis_cache_config']['cache'] . " -->\n";
 	if ( isset( $GLOBALS['wp_redis_cache_config']['cache_duration'] ) ) {
-		echo "<!-- wp-redis-cache-seconds  = " . $GLOBALS['wp_redis_cache_config']['cache_duration'] . " -->\n";
+		echo "<!-- wp-redis-cache-seconds = " . $GLOBALS['wp_redis_cache_config']['cache_duration'] . " -->\n";
 	}
-	echo "<!-- wp-redis-cache-ip  = " . $GLOBALS['wp_redis_cache_config']['server_ip'] . "-->\n";
+	echo "<!-- wp-redis-cache-ip = " . $GLOBALS['wp_redis_cache_config']['server_ip'] . "-->\n";
 	if ( isset( $GLOBALS['wp_redis_cache_config']['unlimited'] ) ) {
 		echo "<!-- wp-redis-cache-unlimited = " . $GLOBALS['wp_redis_cache_config']['unlimited'] . "-->\n";
 	}
-	echo "<!-- wp-redis-cache-debug  = " . $GLOBALS['wp_redis_cache_config']['debug'] . "-->\n";
+	echo "<!-- wp-redis-cache-debug = " . $GLOBALS['wp_redis_cache_config']['debug'] . "-->\n";
 }
