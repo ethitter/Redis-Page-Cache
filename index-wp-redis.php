@@ -7,13 +7,14 @@
  * GLOBAL CONFIGURATION
  */
 $GLOBALS['wp_redis_cache_config'] = array(
-	'debug'         => false,
-	'cache'         => false,
-	'server_ip'     => '127.0.0.1',
-	'redis_server'  => '127.0.0.1',
-	'redis_port'    => 6379,
-	'redis_db'      => 0,
-	'secret_string' => 'changeme',
+	'debug'          => false,
+	'debug_messages' => '',
+	'cache'          => false,
+	'server_ip'      => '127.0.0.1',
+	'redis_server'   => '127.0.0.1',
+	'redis_port'     => 6379,
+	'redis_db'       => 0,
+	'secret_string'  => 'changeme',
 );
 
 // Uncomment either option below to fix the values here and disable the admin UI
@@ -34,7 +35,9 @@ $GLOBALS['wp_redis_cache_config']['current_url'] = wp_redis_cache_get_clean_url(
 $GLOBALS['wp_redis_cache_config']['redis_key']   = md5( $GLOBALS['wp_redis_cache_config']['current_url'] );
 
 // Start the timer so we can track the page load time
-$start = microtime();
+if ( $GLOBALS['wp_redis_cache_config']['debug'] ) {
+	$start = microtime();
+}
 
 /**
  * MOBILE HANDLING
@@ -131,7 +134,7 @@ function wp_redis_cache_connect_redis() {
 	// check if PECL Extension is available
 	if ( class_exists( 'Redis' ) ) {
 		if ( $GLOBALS['wp_redis_cache_config']['debug'] ) {
-			echo "<!-- Redis PECL module found -->\n";
+			$GLOBALS['wp_redis_cache_config']['debug_messages'] .= "<!-- Redis PECL module found -->\n";
 		}
 
 		$redis = new Redis();
@@ -141,7 +144,7 @@ function wp_redis_cache_connect_redis() {
 		$redis->select( $GLOBALS['wp_redis_cache_config']['redis_db'] );
 	} else { // Fallback to predis5.2.php
 		if ( $GLOBALS['wp_redis_cache_config']['debug'] ) {
-			echo "<!-- using predis as a backup -->\n";
+			$GLOBALS['wp_redis_cache_config']['debug_messages'] .= "<!-- using predis as a backup -->\n";
 		}
 
 		include_once dirname( __FILE__ ) . '/wp-content/plugins/wp-redis-cache/predis5.2.php'; //we need this to use Redis inside of PHP
@@ -179,21 +182,21 @@ try {
 	$logged_in = (bool) preg_match( "#(wordpress_(logged|sec)|comment_author)#", var_export( $_COOKIE, true ) );
 
 	if ( $GLOBALS['wp_redis_cache_config']['debug'] ) {
-		echo "<!-- POST request: . " . ( $is_post ? 'yes' : 'no' ) . "-->\n";
-		echo "<!-- Logged in: . " . ( $logged_in ? 'yes' : 'no' ) . "-->\n";
+		$GLOBALS['wp_redis_cache_config']['debug_messages'] .= "<!-- POST request: . " . ( $is_post ? 'yes' : 'no' ) . "-->\n";
+		$GLOBALS['wp_redis_cache_config']['debug_messages'] .= "<!-- Logged in: . " . ( $logged_in ? 'yes' : 'no' ) . "-->\n";
 	}
 
 	// Refresh request, deletes cache: either manual refresh cache by adding ?refresh=secret_string after the URL or somebody posting a comment
 	if ( wp_redis_cache_refresh_has_secret( $GLOBALS['wp_redis_cache_config']['secret_string'] ) || wp_redis_cache_request_has_secret( $GLOBALS['wp_redis_cache_config']['secret_string'] ) || wp_redis_cache_is_remote_page_load( $GLOBALS['wp_redis_cache_config']['current_url'], $GLOBALS['wp_redis_cache_config']['server_ip'] ) ) {
 		if ( $GLOBALS['wp_redis_cache_config']['debug'] ) {
-			echo "<!-- manual refresh was required -->\n";
+			$GLOBALS['wp_redis_cache_config']['debug_messages'] .= "<!-- manual refresh was required -->\n";
 		}
 
 		$redis->del( $GLOBALS['wp_redis_cache_config']['redis_key'] );
 	// This page is cached, the user isn't logged in, and it isn't a POST request, so let's use the cache
 	} elseif ( ! $is_post && ! $logged_in && $redis->exists( $GLOBALS['wp_redis_cache_config']['redis_key'] ) ) {
 		if ( $GLOBALS['wp_redis_cache_config']['debug'] ) {
-			echo "<!-- serving page from cache: key: " . $GLOBALS['wp_redis_cache_config']['redis_key'] . " -->\n";
+			$GLOBALS['wp_redis_cache_config']['debug_messages'] .= "<!-- serving page from cache: key: " . $GLOBALS['wp_redis_cache_config']['redis_key'] . " -->\n";
 		}
 
 		// Page is served from cache, so we don't need WP
@@ -205,7 +208,7 @@ try {
 	} elseif ( $_SERVER['REMOTE_ADDR'] != $GLOBALS['wp_redis_cache_config']['server_ip'] ) {
 		if ( false === strstr( $GLOBALS['wp_redis_cache_config']['current_url'], 'preview=true' ) ) {
 			if ( $GLOBALS['wp_redis_cache_config']['debug'] ) {
-				echo "<!-- displaying page without cache -->\n";
+				$GLOBALS['wp_redis_cache_config']['debug_messages'] .= "<!-- displaying page without cache -->\n";
 			}
 
 			// If user isn't logged in and this isn't a post request, render the requested page and cache if appropriate.
@@ -260,17 +263,22 @@ try {
 	wp_redis_cache_exception_handler( $e );
 }
 
-$end  = microtime();
-$time = @wp_redis_cache_get_micro_time( $end ) - @wp_redis_cache_get_micro_time( $start );
+/**
+ * DEBUGGING OUTPUT
+ */
 if ( $GLOBALS['wp_redis_cache_config']['debug'] ) {
-	echo "<!-- Cache system by Benjamin Adams. Page generated in " . round($time, 5) . " seconds. -->\n";
-	echo "<!-- Site was cached = " . $GLOBALS['wp_redis_cache_config']['cached'] . " -->\n";
+	$end  = microtime();
+	$time = @wp_redis_cache_get_micro_time( $end ) - @wp_redis_cache_get_micro_time( $start );
+	$GLOBALS['wp_redis_cache_config']['debug_messages'] .= "<!-- Cache system by Benjamin Adams. Page generated in " . round($time, 5) . " seconds. -->\n";
+	$GLOBALS['wp_redis_cache_config']['debug_messages'] .= "<!-- Site was cached = " . $GLOBALS['wp_redis_cache_config']['cached'] . " -->\n";
 	if ( isset( $GLOBALS['wp_redis_cache_config']['cache_duration'] ) ) {
-		echo "<!-- wp-redis-cache-seconds = " . $GLOBALS['wp_redis_cache_config']['cache_duration'] . " -->\n";
+		$GLOBALS['wp_redis_cache_config']['debug_messages'] .= "<!-- wp-redis-cache-seconds = " . $GLOBALS['wp_redis_cache_config']['cache_duration'] . " -->\n";
 	}
-	echo "<!-- wp-redis-cache-ip = " . $GLOBALS['wp_redis_cache_config']['server_ip'] . "-->\n";
+	$GLOBALS['wp_redis_cache_config']['debug_messages'] .= "<!-- wp-redis-cache-ip = " . $GLOBALS['wp_redis_cache_config']['server_ip'] . "-->\n";
 	if ( isset( $GLOBALS['wp_redis_cache_config']['unlimited'] ) ) {
-		echo "<!-- wp-redis-cache-unlimited = " . $GLOBALS['wp_redis_cache_config']['unlimited'] . "-->\n";
+		$GLOBALS['wp_redis_cache_config']['debug_messages'] .= "<!-- wp-redis-cache-unlimited = " . $GLOBALS['wp_redis_cache_config']['unlimited'] . "-->\n";
 	}
-	echo "<!-- wp-redis-cache-debug = " . $GLOBALS['wp_redis_cache_config']['debug'] . "-->\n";
+	$GLOBALS['wp_redis_cache_config']['debug_messages'] .= "<!-- wp-redis-cache-debug = " . $GLOBALS['wp_redis_cache_config']['debug'] . "-->\n";
+
+	echo $GLOBALS['wp_redis_cache_config']['debug_messages'];
 }
