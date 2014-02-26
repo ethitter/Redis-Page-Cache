@@ -150,7 +150,7 @@ class WP_Redis_Cache {
 	 */
 	public function register_options() {
 		register_setting( $this->ns, 'wp-redis-cache-seconds', 'absint' );
-		register_setting( $this->ns, 'wp-redis-cache-unlimited', 'is_bool' );
+		register_setting( $this->ns, 'wp-redis-cache-unlimited', 'absint' );
 	}
 
 	/**
@@ -183,7 +183,7 @@ class WP_Redis_Cache {
 			<input type="text" name="wp-redis-cache-seconds" size="45" value="<?php echo (int) get_option( 'wp-redis-cache-seconds' ); ?>" /></p>
 
 			<p><strong>Cache without expiration:</strong><br />If this option is set, the cache never expire. This option overides the setting <em>Duration of Caching in Seconds</em>.<br />
-			<input type="checkbox" name="wp-redis-cache-unlimited" size="45" value="true" <?php checked( 'true', (bool) get_option( 'wp-redis-cache-unlimited' ) ); ?>/></p>
+			<input type="checkbox" name="wp-redis-cache-unlimited" value="1" <?php checked( true, (bool) get_option( 'wp-redis-cache-unlimited' ) ); ?>/></p>
 
 			<p><?php submit_button(); ?></p>
 		</form>
