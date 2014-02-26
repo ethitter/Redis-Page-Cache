@@ -161,6 +161,14 @@ class WP_Redis_Cache {
 	 * @return null
 	 */
 	public function register_ui() {
+		// If cache life is set globally, don't show the UI
+		global $wp_redis_cache_config;
+		if ( is_array( $wp_redis_cache_config ) &&
+			( isset( $wp_redis_cache_config['cache_duration' ] ) || isset( $wp_redis_cache_config['unlimited' ] ) )
+		) {
+			return;
+		}
+
 		add_options_page( 'WP Redis Cache', 'WP Redis Cache', 'manage_options', $this->ns, array( $this, 'render_ui' ) );
 	}
 
@@ -216,10 +224,24 @@ class WP_Redis_Cache {
 	 */
 	public function flush_cache( $new_status, $old_status, $post ) {
 		if ( in_array( 'publish', array( $new_status, $old_status ) ) ) {
+			// Default connection settings
+			$redis_settings = array(
+				'host'     => '127.0.0.1',
+				'port'     => 6379,
+				'database' => 0,
+			);
+
+			// Override default connection settings with global values, when present
+			global $wp_redis_cache_config;
+			if ( is_array( $wp_redis_cache_config ) ) {
+				$_redis_settings = array_intersect( $wp_redis_cache_config, $redis_settings );
+				$redis_settings = wp_parse_args( $_redis_settings, $redis_settings );
+			}
+
 			$permalink = get_permalink( $post->ID );
 
 			include_once dirname( __FILE__ ) . '/predis5.2.php'; // we need this to use Redis inside of PHP
-			$redis = new Predis_Client();
+			$redis = new Predis_Client( $redis_settings );
 
 			$redis_key = md5( $permalink );
 			$redis->del( $redis_key );
