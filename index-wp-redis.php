@@ -11,6 +11,7 @@ global $wp_redis_cache_config;
 $wp_redis_cache_config = array(
 	'debug'          => false,
 	'debug_messages' => '',
+	'stats'          => false,
 	'cache'          => false,
 	'server_ip'      => '127.0.0.1',
 	'redis_server'   => '127.0.0.1',
@@ -37,7 +38,7 @@ $wp_redis_cache_config['current_url'] = wp_redis_cache_get_clean_url( $wp_redis_
 $wp_redis_cache_config['redis_key']   = md5( $wp_redis_cache_config['current_url'] );
 
 // Start the timer so we can track the page load time
-if ( $wp_redis_cache_config['debug'] ) {
+if ( $wp_redis_cache_config['debug'] || $wp_redis_cache_config['stats'] ) {
 	$start = microtime();
 }
 
@@ -58,6 +59,18 @@ $wp_redis_cache_config['redis_key'] = wp_redis_cache_set_device_key( $wp_redis_c
 function wp_redis_cache_get_micro_time( $time ) {
 	list( $usec, $sec ) = explode( " ", $time );
 	return ( (float) $usec + (float) $sec );
+}
+
+/**
+ * Count seconds elapsed between two microtime() timestampes
+ *
+ * @param string $start
+ * @param string $end
+ * @param int $precision
+ * @return float
+ */
+function wp_redis_cache_time_elapsed( $start, $end ) {
+	return round( @wp_redis_cache_get_micro_time( $end ) - @wp_redis_cache_get_micro_time( $start ), 5 );
 }
 
 /**
@@ -271,6 +284,12 @@ try {
 		$wp_redis_cache_config['cached'] = true;
 
 		echo trim( $redis->get( $wp_redis_cache_config['redis_key'] ) );
+
+		// Display generation stats if requested
+		if ( $wp_redis_cache_config['stats'] ) {
+			echo "\n<!-- Page cached via Redis using the WP Redis Cache plugin. -->";
+			echo "\n<!-- Retrieved from cache in " . wp_redis_cache_time_elapsed( $start, microtime() ) . " seconds. -->";
+		}
 	// If the cache does not exist lets display the user the normal page without cache, and then fetch a new cache page
 	} elseif ( $_SERVER['REMOTE_ADDR'] != $wp_redis_cache_config['server_ip'] ) {
 		if ( false === strstr( $wp_redis_cache_config['current_url'], 'preview=true' ) ) {
@@ -288,6 +307,12 @@ try {
 				require_once dirname( __FILE__ ) . '/wp-blog-header.php';
 				$markup_to_cache = trim( ob_get_clean() );
 				echo $markup_to_cache;
+
+				// Display generation stats if requested
+				if ( $wp_redis_cache_config['stats'] ) {
+					echo "\n<!-- Page NOT cached via Redis using the WP Redis Cache plugin. -->";
+					echo "\n<!-- Generated and cached in " . wp_redis_cache_time_elapsed( $start, microtime() ) . " seconds. -->";
+				}
 
 				// Cache rendered page if appropriate
 				if ( ! is_404() && ! is_search() ) {
@@ -335,8 +360,8 @@ try {
  */
 if ( $wp_redis_cache_config['debug'] ) {
 	$end  = microtime();
-	$time = @wp_redis_cache_get_micro_time( $end ) - @wp_redis_cache_get_micro_time( $start );
-	$wp_redis_cache_config['debug_messages'] .= "<!-- Cache system by Erick Hitter. Page generated in " . round($time, 5) . " seconds. -->\n";
+	$time = wp_redis_cache_time_elapsed( $start, $end );
+	$wp_redis_cache_config['debug_messages'] .= "<!-- WP Redis Cache by Erick Hitter. Page generated in " . $time . " seconds. -->\n";
 	$wp_redis_cache_config['debug_messages'] .= "<!-- Site was cached = " . $wp_redis_cache_config['cached'] . " -->\n";
 	if ( isset( $wp_redis_cache_config['cache_duration'] ) ) {
 		$wp_redis_cache_config['debug_messages'] .= "<!-- wp-redis-cache-seconds = " . $wp_redis_cache_config['cache_duration'] . " -->\n";
