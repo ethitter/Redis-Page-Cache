@@ -159,7 +159,7 @@ function wp_redis_cache_set_device_key( $key ) {
  * @return string
  */
 function wp_redis_cache_get_device_type() {
-	$ua = $_SERVER['HTTP_USER_AGENT'];
+	$ua = isset( $_SERVER['HTTP_USER_AGENT'] ) ? $_SERVER['HTTP_USER_AGENT'] : '';
 
 	if ( empty( $ua ) ) {
 		return 'desktop';
