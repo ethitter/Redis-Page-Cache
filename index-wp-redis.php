@@ -34,7 +34,7 @@ function wp_redis_cache_exception_handler( $exception ) {
  *
  * DO NOT EDIT BELOW THIS LINE!
  */
-$wp_redis_cache_config['current_url'] = wp_redis_cache_get_clean_url( $wp_redis_cache_config['secret_string'] );
+$wp_redis_cache_config['current_url'] = wp_redis_cache_get_clean_url();
 $wp_redis_cache_config['redis_key']   = md5( $wp_redis_cache_config['current_url'] );
 
 // Start the timer so we can track the page load time
@@ -118,15 +118,26 @@ function wp_redis_cache_handle_cdn_remote_addressing() {
 /**
  * Prepare a URL for use as a cache key
  *
- * Strips secret key from URL
+ * If the URL is too malformed to parse, a one-time cache is set using microtime().
  *
- * @param string
  * @return string
  */
-function wp_redis_cache_get_clean_url( $secret ) {
-	$replace_keys = array( "?refresh=${secret}","&refresh=${secret}" );
-	$url          = 'http://' . $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'];
-	return str_replace( $replace_keys, '', $url );
+function wp_redis_cache_get_clean_url() {
+	$proto = 'http';
+	if ( isset( $_SERVER['HTTPS'] ) && ( 'on' === strtolower( $_SERVER['HTTPS'] ) || '1' === $_SERVER['HTTPS'] ) ) {
+		$proto .= 's';
+	} elseif ( isset( $_SERVER['SERVER_PORT'] ) && ( '443' == $_SERVER['SERVER_PORT'] ) ) {
+		$proto .= 's';
+	}
+
+	$url = parse_url( $proto . '://' . $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'] );
+	if ( $url ) {
+		$url = $url['scheme'] . '://' . $url['host'] . $url['path'];
+	} else {
+		$url = microtime();
+	}
+
+	return $url;
 }
 
 /**
