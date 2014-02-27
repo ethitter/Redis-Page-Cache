@@ -262,8 +262,8 @@ try {
 	$logged_in = (bool) preg_match( "#(wordpress_(logged|sec)|comment_author)#", var_export( $_COOKIE, true ) );
 
 	if ( $wp_redis_cache_config['debug'] ) {
-		$wp_redis_cache_config['debug_messages'] .= "<!-- POST request: . " . ( $is_post ? 'yes' : 'no' ) . "-->\n";
-		$wp_redis_cache_config['debug_messages'] .= "<!-- Logged in: . " . ( $logged_in ? 'yes' : 'no' ) . "-->\n";
+		$wp_redis_cache_config['debug_messages'] .= "<!-- POST request: " . ( $is_post ? 'yes' : 'no' ) . "-->\n";
+		$wp_redis_cache_config['debug_messages'] .= "<!-- Logged in: " . ( $logged_in ? 'yes' : 'no' ) . "-->\n";
 	}
 
 	// Refresh request, deletes cache: either manual refresh cache by adding ?refresh=secret_string after the URL or somebody posting a comment
@@ -363,6 +363,7 @@ if ( $wp_redis_cache_config['debug'] ) {
 	$time = wp_redis_cache_time_elapsed( $start, $end );
 	$wp_redis_cache_config['debug_messages'] .= "<!-- WP Redis Cache by Erick Hitter. Page generated in " . $time . " seconds. -->\n";
 	$wp_redis_cache_config['debug_messages'] .= "<!-- Site was cached = " . $wp_redis_cache_config['cached'] . " -->\n";
+	$wp_redis_cache_config['debug_messages'] .= "<!-- wp-redis-cache-key = " . $wp_redis_cache_config['redis_key'] . "-->\n";
 	if ( isset( $wp_redis_cache_config['cache_duration'] ) ) {
 		$wp_redis_cache_config['debug_messages'] .= "<!-- wp-redis-cache-seconds = " . $wp_redis_cache_config['cache_duration'] . " -->\n";
 	}
