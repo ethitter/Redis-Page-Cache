@@ -196,9 +196,12 @@ function wp_redis_cache_connect_redis() {
 		}
 
 		$redis = new Redis();
-
 		$redis->connect( $wp_redis_cache_config['redis_server'], $wp_redis_cache_config['redis_port'] );
-		$redis->select( $wp_redis_cache_config['redis_db'] );
+
+		// Default DB is 0, so only need to SELECT if other
+		if ( $wp_redis_cache_config['redis_db'] ) {
+			$redis->select( $wp_redis_cache_config['redis_db'] );
+		}
 	// Fallback to predis5.2.php
 	} else {
 		if ( $wp_redis_cache_config['debug'] ) {
@@ -206,11 +209,17 @@ function wp_redis_cache_connect_redis() {
 		}
 
 		include_once dirname( __FILE__ ) . '/wp-content/plugins/wp-redis-cache/predis5.2.php'; //we need this to use Redis inside of PHP
-		$redis = new Predis_Client( array(
-			'host'     => $wp_redis_cache_config['redis_server'],
-			'port'     => $wp_redis_cache_config['redis_port'],
-			'database' => $wp_redis_cache_config['redis_db'],
-		) );
+		$redis = array(
+			'host' => $wp_redis_cache_config['redis_server'],
+			'port' => $wp_redis_cache_config['redis_port'],
+		);
+
+		// Default DB is 0, so only need to SELECT if other
+		if ( $wp_redis_cache_config['redis_db'] ) {
+			$redis['database'] = $wp_redis_cache_config['redis_db'];
+		}
+
+		$redis = new Predis_Client( $redis );
 	}
 
 	return $redis;

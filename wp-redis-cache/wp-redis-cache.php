@@ -134,17 +134,16 @@ class WP_Redis_Cache {
 			$redis_settings = array(
 				'host'     => '127.0.0.1',
 				'port'     => 6379,
-				'database' => 0,
 			);
 
 			// Override default connection settings with global values, when present
-			if ( defined( 'WP_REDIS_CACHE_REDIS_HOST' ) ) {
+			if ( defined( 'WP_REDIS_CACHE_REDIS_HOST' ) && WP_REDIS_CACHE_REDIS_HOST ) {
 				$redis_settings['host'] = WP_REDIS_CACHE_REDIS_HOST;
 			}
-			if ( defined( 'WP_REDIS_CACHE_REDIS_PORT' ) ) {
+			if ( defined( 'WP_REDIS_CACHE_REDIS_PORT' ) && WP_REDIS_CACHE_REDIS_PORT ) {
 				$redis_settings['port'] = WP_REDIS_CACHE_REDIS_PORT;
 			}
-			if ( defined( 'WP_REDIS_CACHE_REDIS_DB' ) ) {
+			if ( defined( 'WP_REDIS_CACHE_REDIS_DB' ) && WP_REDIS_CACHE_REDIS_DB ) {
 				$redis_settings['database'] = WP_REDIS_CACHE_REDIS_DB;
 			}
 
