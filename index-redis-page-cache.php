@@ -42,6 +42,7 @@ $redis_page_cache_config = array(
 	'cache_headers'           => true,
 	'additional_headers'      => array( 'link', 'x-hacker', 'x-pingback' ),
 	'query_strings_to_ignore' => array(), // common tracking strings are automatically excluded
+	'minify'                  => false,
 );
 
 // Uncomment either option below to fix the values here and disable the admin UI
@@ -407,6 +408,14 @@ try {
 						'content_encoding' => get_option( 'blog_charset', 'UTF-8' ),
 						'headers'          => array(),
 					);
+
+					// Minify cached content
+					if ( $redis_page_cache_config['minify'] ) {
+						$search = array( '#\>[^\S ]+#s', '#[^\S ]+\<#s', '#(\s)+#s' );
+						$replace = array( '>', '<', '\\1' );
+
+						$cache['output'] = preg_replace( $search, $replace, $cache['output'] );
+					}
 
 					// Capture certain headers
 					// Props to @andy and Batcache (http://wordpress.org/plugins/batcache/) for this code
