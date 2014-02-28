@@ -29,18 +29,19 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 global $redis_page_cache_config;
 
 $redis_page_cache_config = array(
-	'debug'              => false,
-	'debug_messages'     => '',
-	'stats'              => false,
-	'cached'             => false,
-	'server_ip'          => '127.0.0.1',
-	'redis_server'       => '127.0.0.1',
-	'redis_port'         => 6379,
-	'redis_db'           => 0,
-	'cache_version'      => 0,
-	'cache_headers'      => true,
-	'additional_headers' => array( 'link', 'x-hacker', 'x-pingback' ),
-	'secret_string'      => 'changeme',
+	'debug'                   => true,
+	'debug_messages'          => '',
+	'stats'                   => false,
+	'cached'                  => false,
+	'server_ip'               => '127.0.0.1',
+	'secret_string'           => 'changeme',
+	'redis_server'            => '127.0.0.1',
+	'redis_port'              => 6379,
+	'redis_db'                => 0,
+	'cache_version'           => 0,
+	'cache_headers'           => true,
+	'additional_headers'      => array( 'link', 'x-hacker', 'x-pingback' ),
+	'query_strings_to_ignore' => array(), // common tracking strings are automatically excluded
 );
 
 // Uncomment either option below to fix the values here and disable the admin UI
@@ -135,6 +136,8 @@ function redis_page_cache_get_clean_url() {
 	static $url;
 
 	if ( ! $url ) {
+		global $redis_page_cache_config;
+
 		$proto = 'http';
 		if ( isset( $_SERVER['HTTPS'] ) && ( 'on' === strtolower( $_SERVER['HTTPS'] ) || '1' === $_SERVER['HTTPS'] ) ) {
 			$proto .= 's';
@@ -144,7 +147,30 @@ function redis_page_cache_get_clean_url() {
 
 		$url = parse_url( $proto . '://' . $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'] );
 		if ( $url ) {
-			$url = $url['scheme'] . '://' . $url['host'] . $url['path'];
+			// Query strings create their own caches, so we reduce proliferation by ignoring certain common strings
+			$qs = '';
+			if ( ! empty( $_GET ) ) {
+				$ignore = array( 'c', 'flush', 'secret', 'utm_source', 'utm_medium', 'utm_term', 'utm_content', 'utm_campaign', 'fb_action_ids', 'fb_action_types', 'fb_ref', 'fb_source', 'fb_aggregation_id', );
+				$ignore = array_merge( $ignore, $redis_page_cache_config['query_strings_to_ignore'] );
+				$ignore = array_flip( $ignore );
+
+				$_qs = array_diff_key( $_GET, $ignore );
+
+				if ( ! empty( $_qs ) ) {
+					$qs = '?';
+					foreach ( $_qs as $key => $value ) {
+						if ( strlen( $qs ) > 1 ) {
+							$qs .= '&';
+						}
+
+						$qs .= "{$key}={$value}";
+					}
+
+					$qs = preg_replace( '#[^A-Z0-9=\-\?\&]#i', '', $qs );
+				}
+			}
+
+			$url = $url['scheme'] . '://' . $url['host'] . $url['path'] . $qs;
 		} else {
 			$url = microtime();
 		}
