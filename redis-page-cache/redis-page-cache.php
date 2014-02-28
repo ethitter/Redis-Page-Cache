@@ -55,9 +55,16 @@ class Redis_Page_Cache {
 	 * @return null
 	 */
 	private function __construct() {
+		// UI
 		add_action( 'admin_init', array( $this, 'register_options' ) );
 		add_action( 'admin_menu', array( $this, 'register_ui' ) );
+
+		// Automated invalidations
 		add_action( 'transition_post_status', array( $this, 'flush_cache' ), 10, 3 );
+
+		// Manual invalidations
+		add_action( 'admin_bar_menu', array( $this, 'admin_bar_menu' ), 999 );
+		add_action( 'wp_ajax_redis_page_cache_purge', array( $this, 'ajax_purge' ) );
 	}
 
 	/**
@@ -112,6 +119,21 @@ class Redis_Page_Cache {
 	 */
 	private function build_key( $url ) {
 		return md5( 'v' . REDIS_PAGE_CACHE_CACHE_VERSION . '-' . $url );
+	}
+
+	/**
+	 * Remove a specific URL from the Redis cache
+	 *
+	 * @param string $url
+	 * @return null
+	 */
+	private function purge( $url ) {
+		$redis = $this->redis();
+
+		$redis_key = $this->build_key( $url );
+		foreach ( array( '', 'M-', 'T-', ) as $prefix ) {
+			$redis->del( $prefix . $redis_key );
+		}
 	}
 
 	/**
@@ -191,19 +213,70 @@ class Redis_Page_Cache {
 	 */
 	public function flush_cache( $new_status, $old_status, $post ) {
 		if ( in_array( 'publish', array( $new_status, $old_status ) ) ) {
-			$redis = $this->redis();
-
-			$redis_key = $this->build_key( get_permalink( $post->ID ) );
-			foreach ( array( '', 'M-', 'T-', ) as $prefix ) {
-				$redis->del( $prefix . $redis_key );
-			}
-
-			//refresh the front page
-			$redis_key = $this->build_key( trailingslashit( get_home_url() ) );
-			foreach ( array( '', 'M-', 'T-', ) as $prefix ) {
-				$redis->del( $prefix . $redis_key );
-			}
+			$this->purge( get_permalink( $post->ID ) );
+			$this->purge( trailingslashit( get_home_url() ) );
 		}
+	}
+
+	/**
+	 * Add a purge option to the admin bar for those with proper capabilities
+	 *
+	 * @return null
+	 */
+	public function admin_bar_menu() {
+		global $wp_admin_bar;
+
+		// In the admin, only show on the post editor
+		if ( is_admin() && 'post' !== get_current_screen()->base ) {
+			return;
+		}
+
+		// Only for Super Admins on multisite or Administrators on single site.
+		if ( ( is_multisite() && ! is_super_admin() ) || ! current_user_can( 'manage_options' ) ) {
+			return;
+		}
+
+		// What are we trying to clear?
+		$page_url = set_url_scheme( esc_url( $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'] ) );
+
+		$flush_url = add_query_arg( array(
+			'action' => 'redis_page_cache_purge',
+			'nonce'  => wp_create_nonce( $page_url ),
+			'url'    => urlencode( $page_url ),
+		), admin_url( 'admin-ajax.php' ) );
+
+		$wp_admin_bar->add_menu( array(
+			'id'     => 'redis-page-cache',
+			'parent' => false,
+			'title'  => __( 'Clear Page Cache', 'redis-page-cache' ),
+			'href'   => $flush_url,
+		) );
+	}
+
+	/**
+	 * Purge a page from cache via an Ajax request
+	 *
+	 * @return null
+	 */
+	public function ajax_purge() {
+		$url      = esc_url_raw( urldecode( $_GET['url'] ) );
+		$redirect = add_query_arg( 'redis-page-cache-purge', 'failed', $url );
+
+		// Check nonce and referrer
+		if ( ! check_ajax_referer( $url, 'nonce', false ) ) {
+			wp_safe_redirect( $redirect, 302 );
+		}
+
+		// Only for Super Admins on multisite or Administrators on single site.
+		if ( ( is_multisite() && ! is_super_admin() ) || ! current_user_can( 'manage_options' ) ) {
+			wp_safe_redirect( $redirect, 302 );
+		}
+
+		// Checks passed, so we purge and redirect with success noted in the query string
+		$this->purge( $url );
+
+		$redirect = add_query_arg( 'redis-page-cache-purge', 'success', $redirect );
+		wp_safe_redirect( $redirect, 302 );
 	}
 }
 
