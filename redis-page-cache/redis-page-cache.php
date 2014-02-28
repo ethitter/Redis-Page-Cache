@@ -27,6 +27,9 @@ class Redis_Page_Cache {
 	// Hold singleton instance
 	private static $__instance = null;
 
+	// Maintain a single instance of the Redis library, on demand via redis()
+	private static $__redis = null;
+
 	// Regular class variables
 	private $ns = 'redis-page-cache';
 
@@ -50,6 +53,52 @@ class Redis_Page_Cache {
 		add_action( 'admin_init', array( $this, 'register_options' ) );
 		add_action( 'admin_menu', array( $this, 'register_ui' ) );
 		add_action( 'transition_post_status', array( $this, 'flush_cache' ), 10, 3 );
+
+		$this->redis();
+	}
+
+	/**
+	 * Create an instance of the Predis library as needed
+	 *
+	 * @return object
+	 */
+	private function redis() {
+		if ( is_null( self::$__redis ) ) {
+			// Default connection settings
+			$redis_settings = array(
+				'host'     => '127.0.0.1',
+				'port'     => 6379,
+			);
+
+			// Override default connection settings with global values, when present
+			if ( defined( 'REDIS_PAGE_CACHE_REDIS_HOST' ) && REDIS_PAGE_CACHE_REDIS_HOST ) {
+				$redis_settings['host'] = REDIS_PAGE_CACHE_REDIS_HOST;
+			}
+			if ( defined( 'REDIS_PAGE_CACHE_REDIS_PORT' ) && REDIS_PAGE_CACHE_REDIS_PORT ) {
+				$redis_settings['port'] = REDIS_PAGE_CACHE_REDIS_PORT;
+			}
+			if ( defined( 'REDIS_PAGE_CACHE_REDIS_DB' ) && REDIS_PAGE_CACHE_REDIS_DB ) {
+				$redis_settings['database'] = REDIS_PAGE_CACHE_REDIS_DB;
+			}
+
+			// Connect to Redis using either the PHP PECL extension of the bundled Predis library
+			if ( class_exists( 'Redis' ) ) {
+				self::$redis = new Redis();
+
+				self::$redis->connect( $redis_settings['host'], $redis_settings['port'] );
+
+				// Default DB is 0, so only need to SELECT if other
+				if ( isset( $redis_settings['database'] ) ) {
+					self::$redis->select( $redis_settings['database'] );
+				}
+			} else {
+				// Load the Predis library and return an instance of it
+				include_once dirname( __FILE__ ) . '/predis5.2.php';
+				self::$__redis = new Predis_Client( $redis_settings );
+			}
+		}
+
+		return self::$__redis;
 	}
 
 	/**
@@ -129,29 +178,9 @@ class Redis_Page_Cache {
 	 */
 	public function flush_cache( $new_status, $old_status, $post ) {
 		if ( in_array( 'publish', array( $new_status, $old_status ) ) ) {
-			// Default connection settings
-			$redis_settings = array(
-				'host'     => '127.0.0.1',
-				'port'     => 6379,
-			);
+			$redis = $this->redis();
 
-			// Override default connection settings with global values, when present
-			if ( defined( 'REDIS_PAGE_CACHE_REDIS_HOST' ) && REDIS_PAGE_CACHE_REDIS_HOST ) {
-				$redis_settings['host'] = REDIS_PAGE_CACHE_REDIS_HOST;
-			}
-			if ( defined( 'REDIS_PAGE_CACHE_REDIS_PORT' ) && REDIS_PAGE_CACHE_REDIS_PORT ) {
-				$redis_settings['port'] = REDIS_PAGE_CACHE_REDIS_PORT;
-			}
-			if ( defined( 'REDIS_PAGE_CACHE_REDIS_DB' ) && REDIS_PAGE_CACHE_REDIS_DB ) {
-				$redis_settings['database'] = REDIS_PAGE_CACHE_REDIS_DB;
-			}
-
-			$permalink = get_permalink( $post->ID );
-
-			include_once dirname( __FILE__ ) . '/predis5.2.php'; // we need this to use Redis inside of PHP
-			$redis = new Predis_Client( $redis_settings );
-
-			$redis_key = md5( $permalink );
+			$redis_key = md5( get_permalink( $post->ID ) );
 			foreach ( array( '', 'M-', 'T-', ) as $prefix ) {
 				$redis->del( $prefix . $redis_key );
 			}
