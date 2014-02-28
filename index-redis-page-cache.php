@@ -336,29 +336,23 @@ try {
 				// Cache rendered page if appropriate
 				if ( ! is_404() && ! is_search() ) {
 					// Is unlimited cache life requested?
-					if ( isset( $redis_page_cache_config['unlimited'] ) ) {
-						$unlimited = $redis_page_cache_config['unlimited'];
-					} else {
-						$unlimited = (bool) get_option( 'redis-page-cache-debug', false );
-						$redis_page_cache_config['unlimited'] = $unlimited;
+					if ( ! isset( $redis_page_cache_config['unlimited'] ) ) {
+						$redis_page_cache_config['unlimited'] = (bool) get_option( 'redis-page-cache-debug', false );
 					}
 
 					// Cache the page for the chosen duration
-					if ( $unlimited ) {
+					if ( $redis_page_cache_config['unlimited'] ) {
 						$redis->set( $redis_page_cache_config['redis_key'], $markup_to_cache );
 					} else {
-						if ( isset( $redis_page_cache_config['cache_duration'] ) ) {
-							$cache_duration = $redis_page_cache_config['cache_duration'];
-						} else {
-							$cache_duration = (int) get_option( 'redis-page-cache-seconds', 43200 );
-							$redis_page_cache_config['cache_duration'] = $cache_duration;
+						if ( ! isset( $redis_page_cache_config['cache_duration'] ) ) {
+							$redis_page_cache_config['cache_duration'] = (int) get_option( 'redis-page-cache-seconds', 43200 );
 						}
 
-						if ( ! is_numeric( $cache_duration ) ) {
-							$cache_duration = $redis_page_cache_config['cache_duration'] = 43200;
+						if ( ! is_numeric( $redis_page_cache_config['cache_duration'] ) ) {
+							$redis_page_cache_config['cache_duration'] = 43200;
 						}
 
-						$redis->setex( $redis_page_cache_config['redis_key'], $cache_duration, $markup_to_cache );
+						$redis->setex( $redis_page_cache_config['redis_key'], $redis_page_cache_config['cache_duration'], $markup_to_cache );
 					}
 				}
 			}
