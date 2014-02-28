@@ -32,11 +32,12 @@ $redis_page_cache_config = array(
 	'debug'          => false,
 	'debug_messages' => '',
 	'stats'          => false,
-	'cached'          => false,
+	'cached'         => false,
 	'server_ip'      => '127.0.0.1',
 	'redis_server'   => '127.0.0.1',
 	'redis_port'     => 6379,
 	'redis_db'       => 0,
+	'cache_version'  => 1,
 	'secret_string'  => 'changeme',
 );
 
@@ -55,7 +56,7 @@ function redis_page_cache_exception_handler( $exception ) {
  * DO NOT EDIT BELOW THIS LINE!
  */
 $redis_page_cache_config['current_url'] = redis_page_cache_get_clean_url();
-$redis_page_cache_config['redis_key']   = md5( $redis_page_cache_config['current_url'] );
+$redis_page_cache_config['redis_key']   = md5( 'v' . $redis_page_cache_config['cache_version'] . '-' . $redis_page_cache_config['current_url'] );
 
 // Start the timer so we can track the page load time
 if ( $redis_page_cache_config['debug'] || $redis_page_cache_config['stats'] ) {
