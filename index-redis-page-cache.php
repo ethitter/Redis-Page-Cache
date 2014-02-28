@@ -132,18 +132,22 @@ function redis_page_cache_handle_cdn_remote_addressing() {
  * @return string
  */
 function redis_page_cache_get_clean_url() {
-	$proto = 'http';
-	if ( isset( $_SERVER['HTTPS'] ) && ( 'on' === strtolower( $_SERVER['HTTPS'] ) || '1' === $_SERVER['HTTPS'] ) ) {
-		$proto .= 's';
-	} elseif ( isset( $_SERVER['SERVER_PORT'] ) && ( '443' == $_SERVER['SERVER_PORT'] ) ) {
-		$proto .= 's';
-	}
+	static $url;
 
-	$url = parse_url( $proto . '://' . $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'] );
-	if ( $url ) {
-		$url = $url['scheme'] . '://' . $url['host'] . $url['path'];
-	} else {
-		$url = microtime();
+	if ( ! $url ) {
+		$proto = 'http';
+		if ( isset( $_SERVER['HTTPS'] ) && ( 'on' === strtolower( $_SERVER['HTTPS'] ) || '1' === $_SERVER['HTTPS'] ) ) {
+			$proto .= 's';
+		} elseif ( isset( $_SERVER['SERVER_PORT'] ) && ( '443' == $_SERVER['SERVER_PORT'] ) ) {
+			$proto .= 's';
+		}
+
+		$url = parse_url( $proto . '://' . $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'] );
+		if ( $url ) {
+			$url = $url['scheme'] . '://' . $url['host'] . $url['path'];
+		} else {
+			$url = microtime();
+		}
 	}
 
 	return $url;
@@ -378,7 +382,8 @@ try {
  */
 if ( $redis_page_cache_config['debug'] ) {
 	$redis_page_cache_config['debug_messages'] .= "<!-- Redis Page Cache by Erick Hitter (http://eth.pw/rpc). Page generated in " . redis_page_cache_time_elapsed( $start, microtime() ) . " seconds. -->\n";
-	$redis_page_cache_config['debug_messages'] .= "<!-- Cache key: " . $redis_page_cache_config['redis_key'] . "-->\n";
+	$redis_page_cache_config['debug_messages'] .= "<!-- Cache key: " . $redis_page_cache_config['redis_key'] . " -->\n";
+	$redis_page_cache_config['debug_messages'] .= "<!-- Cached URL: " . redis_page_cache_get_clean_url() . " -->\n";
 
 	if ( isset( $redis_page_cache_config['unlimited'] ) && $redis_page_cache_config['unlimited'] ) {
 		$cache_duration = 'infinite';
