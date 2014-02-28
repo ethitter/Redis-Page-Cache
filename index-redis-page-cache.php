@@ -57,18 +57,16 @@ function redis_page_cache_exception_handler( $exception ) {
  *
  * DO NOT EDIT BELOW THIS LINE!
  */
-$redis_page_cache_config['current_url'] = redis_page_cache_get_clean_url();
-$redis_page_cache_config['redis_key']   = md5( 'v' . $redis_page_cache_config['cache_version'] . '-' . $redis_page_cache_config['current_url'] );
 
 // Start the timer so we can track the page load time
 if ( $redis_page_cache_config['debug'] || $redis_page_cache_config['stats'] ) {
 	$start = microtime();
 }
 
-/**
- * SET SEPARATE CACHES FOR BROAD DEVICE TYPES
- */
-$redis_page_cache_config['redis_key'] = redis_page_cache_set_device_key( $redis_page_cache_config['redis_key'] );
+// Make run-time additions to configuration
+$redis_page_cache_config['current_url'] = redis_page_cache_get_clean_url();
+$redis_page_cache_config['redis_key']   = md5( 'v' . $redis_page_cache_config['cache_version'] . '-' . $redis_page_cache_config['current_url'] );
+$redis_page_cache_config['redis_key']   = redis_page_cache_set_device_key( $redis_page_cache_config['redis_key'] );
 
 /**
  * UTILITY FUNCTIONS
