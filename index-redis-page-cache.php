@@ -1,7 +1,27 @@
 <?php
-/**
- * Redis Page Cache
- */
+/*
+Plugin Name: Redis Page Cache
+Plugin URI: http://eth.pw/rpc
+Version: 1.0
+Description: Manage settings for full-page caching powered by Redis.
+Author: Erick Hitter
+Author URI: https://ethitter.com/
+
+This software is based on WP Redis Cache by Benjamin Adams, copyright 2013.
+
+This program is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License, version 2, as
+published by the Free Software Foundation.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, write to the Free Software
+Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+*/
 
 /**
  * GLOBAL CONFIGURATION
@@ -220,7 +240,7 @@ function redis_page_cache_connect_redis() {
 			$redis_page_cache_config['debug_messages'] .= "<!-- using predis as a backup -->\n";
 		}
 
-		include_once dirname( __FILE__ ) . '/wp-content/plugins/wp-redis-cache/predis5.2.php'; //we need this to use Redis inside of PHP
+		include_once dirname( __FILE__ ) . '/wp-content/plugins/redis-page-cache/predis5.2.php'; //we need this to use Redis inside of PHP
 		$redis = array(
 			'host' => $redis_page_cache_config['redis_server'],
 			'port' => $redis_page_cache_config['redis_port'],
@@ -319,7 +339,7 @@ try {
 					if ( isset( $redis_page_cache_config['unlimited'] ) ) {
 						$unlimited = $redis_page_cache_config['unlimited'];
 					} else {
-						$unlimited = (bool) get_option( 'wp-redis-cache-debug', false );
+						$unlimited = (bool) get_option( 'redis-page-cache-debug', false );
 						$redis_page_cache_config['unlimited'] = $unlimited;
 					}
 
@@ -330,7 +350,7 @@ try {
 						if ( isset( $redis_page_cache_config['cache_duration'] ) ) {
 							$cache_duration = $redis_page_cache_config['cache_duration'];
 						} else {
-							$cache_duration = (int) get_option( 'wp-redis-cache-seconds', 43200 );
+							$cache_duration = (int) get_option( 'redis-page-cache-seconds', 43200 );
 							$redis_page_cache_config['cache_duration'] = $cache_duration;
 						}
 
@@ -362,15 +382,15 @@ if ( $redis_page_cache_config['debug'] ) {
 	$time = redis_page_cache_time_elapsed( $start, $end );
 	$redis_page_cache_config['debug_messages'] .= "<!-- Redis Page Cache by Erick Hitter. Page generated in " . $time . " seconds. -->\n";
 	$redis_page_cache_config['debug_messages'] .= "<!-- Site was cached = " . $redis_page_cache_config['cached'] . " -->\n";
-	$redis_page_cache_config['debug_messages'] .= "<!-- wp-redis-cache-key = " . $redis_page_cache_config['redis_key'] . "-->\n";
+	$redis_page_cache_config['debug_messages'] .= "<!-- redis-page-cache-key = " . $redis_page_cache_config['redis_key'] . "-->\n";
 	if ( isset( $redis_page_cache_config['cache_duration'] ) ) {
-		$redis_page_cache_config['debug_messages'] .= "<!-- wp-redis-cache-seconds = " . $redis_page_cache_config['cache_duration'] . " -->\n";
+		$redis_page_cache_config['debug_messages'] .= "<!-- redis-page-cache-seconds = " . $redis_page_cache_config['cache_duration'] . " -->\n";
 	}
-	$redis_page_cache_config['debug_messages'] .= "<!-- wp-redis-cache-ip = " . $redis_page_cache_config['server_ip'] . "-->\n";
+	$redis_page_cache_config['debug_messages'] .= "<!-- redis-page-cache-ip = " . $redis_page_cache_config['server_ip'] . "-->\n";
 	if ( isset( $redis_page_cache_config['unlimited'] ) ) {
-		$redis_page_cache_config['debug_messages'] .= "<!-- wp-redis-cache-unlimited = " . $redis_page_cache_config['unlimited'] . "-->\n";
+		$redis_page_cache_config['debug_messages'] .= "<!-- redis-page-cache-unlimited = " . $redis_page_cache_config['unlimited'] . "-->\n";
 	}
-	$redis_page_cache_config['debug_messages'] .= "<!-- wp-redis-cache-debug = " . $redis_page_cache_config['debug'] . "-->\n";
+	$redis_page_cache_config['debug_messages'] .= "<!-- redis-page-cache-debug = " . $redis_page_cache_config['debug'] . "-->\n";
 
 	echo $redis_page_cache_config['debug_messages'];
 }

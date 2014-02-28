@@ -1,7 +1,7 @@
 <?php
 /*
 Plugin Name: Redis Page Cache
-Plugin URI: https://github.com/ethitter/wp-redis-cache
+Plugin URI: http://eth.pw/rpc
 Version: 1.0
 Description: Manage settings for full-page caching powered by Redis.
 Author: Erick Hitter
@@ -21,7 +21,6 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
-
 */
 
 class Redis_Page_Cache {
@@ -29,7 +28,7 @@ class Redis_Page_Cache {
 	private static $__instance = null;
 
 	// Regular class variables
-	private $ns = 'wp-redis-cache';
+	private $ns = 'redis-page-cache';
 
 	/**
 	 * Singleton instantiation
@@ -59,8 +58,8 @@ class Redis_Page_Cache {
 	 * @return null
 	 */
 	public function register_options() {
-		register_setting( $this->ns, 'wp-redis-cache-seconds', 'absint' );
-		register_setting( $this->ns, 'wp-redis-cache-unlimited', 'absint' );
+		register_setting( $this->ns, 'redis-page-cache-seconds', 'absint' );
+		register_setting( $this->ns, 'redis-page-cache-unlimited', 'absint' );
 	}
 
 	/**
@@ -90,25 +89,25 @@ class Redis_Page_Cache {
 		<form method="post" action="options.php">
 			<?php settings_fields( $this->ns ); ?>
 
-			<p><?php printf( __( 'This plugin does not work out of the box and requires additional steps.<br />Please follow these install instructions: %s.', 'wp-redis-cache' ), '<a target="_blank" href="https://github.com/BenjaminAdams/wp-redis-cache">https://github.com/BenjaminAdams/wp-redis-cache</a>' ); ?></p>
+			<p><?php printf( __( 'This plugin does not work out of the box and requires additional steps.<br />Please follow these install instructions: %s.', 'redis-page-cache' ), '<a target="_blank" href="https://github.com/BenjaminAdams/redis-page-cache">https://github.com/BenjaminAdams/redis-page-cache</a>' ); ?></p>
 
-			<p><?php _e( 'If you do not have Redis installed on your machine this will NOT work!', 'wp-redis-cache' ); ?></p>
+			<p><?php _e( 'If you do not have Redis installed on your machine this will NOT work!', 'redis-page-cache' ); ?></p>
 
 			<table class="form-table">
 				<tr>
-					<th scope="row"><label for="duration-seconds"><?php _e( 'Duration of Caching in Seconds:', 'wp-redis-cache' ); ?></label></td>
+					<th scope="row"><label for="duration-seconds"><?php _e( 'Duration of Caching in Seconds:', 'redis-page-cache' ); ?></label></td>
 					<td>
-						<input type="text" name="wp-redis-cache-seconds" id="duration-seconds" size="15" value="<?php echo (int) get_option( 'wp-redis-cache-seconds', 43200 ); ?>" />
+						<input type="text" name="redis-page-cache-seconds" id="duration-seconds" size="15" value="<?php echo (int) get_option( 'redis-page-cache-seconds', 43200 ); ?>" />
 
-						<p class="description"><?php _e( 'How many seconds would you like to cache individual pages? <strong>Recommended 12 hours or 43200 seconds</strong>.', 'wp-redis-cache' ); ?></p>
+						<p class="description"><?php _e( 'How many seconds would you like to cache individual pages? <strong>Recommended 12 hours or 43200 seconds</strong>.', 'redis-page-cache' ); ?></p>
 					</td>
 				</tr>
 				<tr>
-					<th scope="row"><label for="unlimited-cache"><?php _e( 'Cache Without Expiration?', 'wp-redis-cache' ); ?></label></th>
+					<th scope="row"><label for="unlimited-cache"><?php _e( 'Cache Without Expiration?', 'redis-page-cache' ); ?></label></th>
 					<td>
-						<input type="checkbox" name="wp-redis-cache-unlimited" id="unlimited-cache" value="1" <?php checked( true, (bool) get_option( 'wp-redis-cache-unlimited', false ) ); ?>/>
+						<input type="checkbox" name="redis-page-cache-unlimited" id="unlimited-cache" value="1" <?php checked( true, (bool) get_option( 'redis-page-cache-unlimited', false ) ); ?>/>
 
-						<p class="description"><?php _e( 'If this option is set, the cache never expire. This option overides the setting <em>Duration of Caching in Seconds</em>.', 'wp-redis-cache' ); ?></p>
+						<p class="description"><?php _e( 'If this option is set, the cache never expire. This option overides the setting <em>Duration of Caching in Seconds</em>.', 'redis-page-cache' ); ?></p>
 					</td>
 				</tr>
 			</table>
