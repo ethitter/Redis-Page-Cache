@@ -29,17 +29,18 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 global $redis_page_cache_config;
 
 $redis_page_cache_config = array(
-	'debug'          => false,
-	'debug_messages' => '',
-	'stats'          => false,
-	'cached'         => false,
-	'server_ip'      => '127.0.0.1',
-	'redis_server'   => '127.0.0.1',
-	'redis_port'     => 6379,
-	'redis_db'       => 0,
-	'cache_version'  => 1,
-	'cache_headers'  => true,
-	'secret_string'  => 'changeme',
+	'debug'              => false,
+	'debug_messages'     => '',
+	'stats'              => false,
+	'cached'             => false,
+	'server_ip'          => '127.0.0.1',
+	'redis_server'       => '127.0.0.1',
+	'redis_port'         => 6379,
+	'redis_db'           => 0,
+	'cache_version'      => 0,
+	'cache_headers'      => true,
+	'additional_headers' => array( 'link', 'x-hacker', 'x-pingback' ),
+	'secret_string'      => 'changeme',
 );
 
 // Uncomment either option below to fix the values here and disable the admin UI
@@ -275,6 +276,9 @@ if ( ! defined( 'WP_USE_THEMES' ) ) {
 	define( 'WP_USE_THEMES', true );
 }
 
+// Set a header advertising the cache engine
+header( 'X-Redis-Page-Cache: Redis Page Cache for WordPress by Erick Hitter (http://eth.pw/rpc)', true );
+
 try {
 	// Establish connection with Redis server
 	$redis = redis_page_cache_connect_redis();
@@ -310,6 +314,13 @@ try {
 
 		// Retrieve cached page, which is an array that includes meta data along with the page output
 		$cache = unserialize( $redis->get( $redis_page_cache_config['redis_key'] ) );
+
+		// Output cached headers from original page
+		if ( ! empty( $cache['headers'] ) ) {
+			foreach ( $cache['headers'] as $key => $value ) {
+				header( "{$key}: {$value}", true );
+			}
+		}
 
 		// Output cache headers if desired
 		if ( $redis_page_cache_config['cache_headers'] ) {
@@ -360,11 +371,36 @@ try {
 
 				// Cache rendered page if appropriate
 				if ( ! is_404() && ! is_search() ) {
+					// Default cache payload
 					$cache = array(
-						'output' => $output,
-						'time'   => time(),
-						'age'    => 31536000, // one year in seconds
+						'output'  => $output,
+						'time'    => time(),
+						'age'     => 31536000, // one year in seconds
+						'headers' => array(),
 					);
+
+					// Capture certain headers
+					// Props to @andy and Batcache (http://wordpress.org/plugins/batcache/) for this code
+					if ( ! empty( $redis_page_cache_config['additional_headers' ] ) ) {
+						if ( function_exists( 'headers_list' ) ) {
+							foreach ( headers_list() as $header ) {
+								list( $key, $value ) = array_map( 'trim', explode( ':', $header, 2 ) );
+								$cache['headers'][ $key ] = $value;
+							}
+						} elseif ( function_exists( 'apache_response_headers' ) ) {
+							$cache['headers'] = apache_response_headers();
+						}
+
+						if ( $cache['headers'] ) {
+							foreach ( $cache['headers'] as $key => $value ) {
+								if ( ! in_array( strtolower( $key ), $redis_page_cache_config['additional_headers' ] ) )
+									unset( $cache['headers'][$key] );
+							}
+						}
+
+						unset( $key );
+						unset( $value );
+					}
 
 					// Is unlimited cache life requested?
 					if ( ! isset( $redis_page_cache_config['unlimited'] ) ) {
