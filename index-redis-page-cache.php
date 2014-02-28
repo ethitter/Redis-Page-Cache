@@ -150,7 +150,7 @@ function redis_page_cache_get_clean_url() {
 			// Query strings create their own caches, so we reduce proliferation by ignoring certain common strings
 			$qs = '';
 			if ( ! empty( $_GET ) ) {
-				$ignore = array( 'c', 'flush', 'secret', 'utm_source', 'utm_medium', 'utm_term', 'utm_content', 'utm_campaign', 'fb_action_ids', 'fb_action_types', 'fb_ref', 'fb_source', 'fb_aggregation_id', );
+				$ignore = array( 'c', 'flush', 'secret', 'redis-page-cache-purge', 'utm_source', 'utm_medium', 'utm_term', 'utm_content', 'utm_campaign', 'fb_action_ids', 'fb_action_types', 'fb_ref', 'fb_source', 'fb_aggregation_id', );
 				$ignore = array_merge( $ignore, $redis_page_cache_config['query_strings_to_ignore'] );
 				$ignore = array_flip( $ignore );
 
