@@ -1,13 +1,13 @@
 <?php
 /*
-Plugin Name: WP Redis Cache
+Plugin Name: Redis Page Cache
 Plugin URI: https://github.com/ethitter/wp-redis-cache
 Version: 1.0
 Description: Manage settings for full-page caching powered by Redis.
 Author: Erick Hitter
 Author URI: https://ethitter.com/
 
-This software is based heavily on work of the same name by Benjamin Adams, copyright 2013.
+This software is based on WP Redis Cache by Benjamin Adams, copyright 2013.
 
 This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License, version 2, as
@@ -24,7 +24,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 */
 
-class WP_Redis_Cache {
+class Redis_Page_Cache {
 	// Hold singleton instance
 	private static $__instance = null;
 
@@ -71,11 +71,11 @@ class WP_Redis_Cache {
 	 */
 	public function register_ui() {
 		// Don't show UI
-		if ( defined( 'WP_REDIS_CACHE_HIDE_UI' ) && WP_REDIS_CACHE_HIDE_UI ) {
+		if ( defined( 'REDIS_PAGE_CACHE_HIDE_UI' ) && REDIS_PAGE_CACHE_HIDE_UI ) {
 			return;
 		}
 
-		add_options_page( 'WP Redis Cache', 'WP Redis Cache', 'manage_options', $this->ns, array( $this, 'render_ui' ) );
+		add_options_page( 'Redis Page Cache', 'Redis Page Cache', 'manage_options', $this->ns, array( $this, 'render_ui' ) );
 	}
 
 	/**
@@ -86,7 +86,7 @@ class WP_Redis_Cache {
 	public function render_ui() {
 		?>
 		<div class="wrap">
-		<h2>WP Redis Cache Options</h2>
+		<h2>Redis Page Cache Options</h2>
 		<form method="post" action="options.php">
 			<?php settings_fields( $this->ns ); ?>
 
@@ -137,14 +137,14 @@ class WP_Redis_Cache {
 			);
 
 			// Override default connection settings with global values, when present
-			if ( defined( 'WP_REDIS_CACHE_REDIS_HOST' ) && WP_REDIS_CACHE_REDIS_HOST ) {
-				$redis_settings['host'] = WP_REDIS_CACHE_REDIS_HOST;
+			if ( defined( 'REDIS_PAGE_CACHE_REDIS_HOST' ) && REDIS_PAGE_CACHE_REDIS_HOST ) {
+				$redis_settings['host'] = REDIS_PAGE_CACHE_REDIS_HOST;
 			}
-			if ( defined( 'WP_REDIS_CACHE_REDIS_PORT' ) && WP_REDIS_CACHE_REDIS_PORT ) {
-				$redis_settings['port'] = WP_REDIS_CACHE_REDIS_PORT;
+			if ( defined( 'REDIS_PAGE_CACHE_REDIS_PORT' ) && REDIS_PAGE_CACHE_REDIS_PORT ) {
+				$redis_settings['port'] = REDIS_PAGE_CACHE_REDIS_PORT;
 			}
-			if ( defined( 'WP_REDIS_CACHE_REDIS_DB' ) && WP_REDIS_CACHE_REDIS_DB ) {
-				$redis_settings['database'] = WP_REDIS_CACHE_REDIS_DB;
+			if ( defined( 'REDIS_PAGE_CACHE_REDIS_DB' ) && REDIS_PAGE_CACHE_REDIS_DB ) {
+				$redis_settings['database'] = REDIS_PAGE_CACHE_REDIS_DB;
 			}
 
 			$permalink = get_permalink( $post->ID );
@@ -167,4 +167,4 @@ class WP_Redis_Cache {
 	}
 }
 
-WP_Redis_Cache::get_instance();
+Redis_Page_Cache::get_instance();
