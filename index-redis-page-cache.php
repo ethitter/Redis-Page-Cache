@@ -312,11 +312,11 @@ try {
 
 	// Relevant details on the current request
 	$is_post_request = ( ! empty( $GLOBALS['HTTP_RAW_POST_DATA'] ) || ! empty( $_POST ) );
-	$is_cache_exempt = (bool) preg_match( "#(wordpress_(logged|sec)|comment_author)#", var_export( $_COOKIE, true ) );
+	$is_cache_exempt = (bool) preg_match( "#(wordpress_(logged|sec)|wp\-postpass|comment_author)#", var_export( $_COOKIE, true ) );
 
 	if ( $redis_page_cache_config['debug'] ) {
 		$redis_page_cache_config['debug_messages'] .= "<!-- POST request: " . ( $is_post_request ? 'yes' : 'no' ) . " -->\n";
-		$redis_page_cache_config['debug_messages'] .= "<!-- Cache exexmpt (logged in, commenter): " . ( $is_cache_exempt ? 'yes' : 'no' ) . " -->\n";
+		$redis_page_cache_config['debug_messages'] .= "<!-- Cache exexmpt (logged in, password-protected post, commenter): " . ( $is_cache_exempt ? 'yes' : 'no' ) . " -->\n";
 	}
 
 	// Refresh request, deletes cache: either manual refresh cache by adding ?refresh=secret_string after the URL or somebody posting a comment
@@ -326,7 +326,7 @@ try {
 		}
 
 		$redis->del( $redis_page_cache_config['redis_key'] );
-	// This page is cached, the user isn't logged in, and it isn't a POST request, so let's use the cache
+	// This page is cached, the user isn't exempted from cache, and it isn't a POST request, so let's use the cache
 	} elseif ( ! $is_post_request && ! $is_cache_exempt && $redis->exists( $redis_page_cache_config['redis_key'] ) ) {
 		if ( $redis_page_cache_config['debug'] ) {
 			$redis_page_cache_config['debug_messages'] .= "<!-- Serving page from cache -->\n";
@@ -375,7 +375,7 @@ try {
 				$redis_page_cache_config['debug_messages'] .= "<!-- Displaying page without cache -->\n";
 			}
 
-			// If user isn't logged in and this isn't a post request, render the requested page and cache if appropriate.
+			// If user isn't exempt from caching and this isn't a post request, render the requested page and cache if appropriate.
 			if ( ! $is_post_request && ! $is_cache_exempt ) {
 				if ( $redis_page_cache_config['debug'] ) {
 					$redis_page_cache_config['debug_messages'] .= "<!-- Adding page to cache -->\n";
