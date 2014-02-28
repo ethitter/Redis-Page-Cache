@@ -95,13 +95,13 @@ class Redis_Page_Cache {
 
 			// Connect to Redis using either the PHP PECL extension of the bundled Predis library
 			if ( class_exists( 'Redis' ) ) {
-				self::$redis = new Redis();
+				self::$__redis = new Redis();
 
-				self::$redis->connect( $redis_settings['host'], $redis_settings['port'] );
+				self::$__redis->connect( $redis_settings['host'], $redis_settings['port'] );
 
 				// Default DB is 0, so only need to SELECT if other
 				if ( isset( $redis_settings['database'] ) ) {
-					self::$redis->select( $redis_settings['database'] );
+					self::$__redis->select( $redis_settings['database'] );
 				}
 			} else {
 				// Load the Predis library and return an instance of it
