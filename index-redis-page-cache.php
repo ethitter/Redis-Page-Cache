@@ -38,6 +38,7 @@ $redis_page_cache_config = array(
 	'redis_port'     => 6379,
 	'redis_db'       => 0,
 	'cache_version'  => 1,
+	'cache_headers'  => true,
 	'secret_string'  => 'changeme',
 );
 
@@ -307,7 +308,19 @@ try {
 		$load_wp = false;
 		$redis_page_cache_config['cached'] = true;
 
-		echo trim( $redis->get( $redis_page_cache_config['redis_key'] ) );
+		$cache = unserialize( $redis->get( $redis_page_cache_config['redis_key'] ) );
+
+		if ( $redis_page_cache_config['cache_headers'] ) {
+			header( 'Last-Modified: ' . gmdate( 'D, d M Y H:i:s', $cache['time'] ) . ' GMT', true );
+			header( 'Cache-Control: max-age=' . $cache['age'] . ', must-revalidate', false );
+		}
+
+		echo trim( $cache['output'] );
+
+		if ( $redis_page_cache_config['debug'] ) {
+			$redis_page_cache_config['debug_messages'] .= "<!-- Last Modified: " . gmdate( 'D, d M Y H:i:s', $cache['time'] ) . " GMT . -->\n";
+			$redis_page_cache_config['debug_messages'] .= "<!-- Max Age: " . $cache['age'] . " -->\n";
+		}
 
 		// Display generation stats if requested
 		if ( $redis_page_cache_config['stats'] ) {
@@ -333,8 +346,8 @@ try {
 				// Render page into an output buffer and display
 				ob_start();
 				require_once dirname( __FILE__ ) . '/wp-blog-header.php';
-				$markup_to_cache = trim( ob_get_clean() );
-				echo $markup_to_cache;
+				$output = trim( ob_get_clean() );
+				echo $output;
 
 				// Display generation stats if requested
 				if ( $redis_page_cache_config['stats'] ) {
@@ -344,6 +357,12 @@ try {
 
 				// Cache rendered page if appropriate
 				if ( ! is_404() && ! is_search() ) {
+					$cache = array(
+						'output' => $output,
+						'time'   => time(),
+						'age'    => 31536000, // one year in seconds
+					);
+
 					// Is unlimited cache life requested?
 					if ( ! isset( $redis_page_cache_config['unlimited'] ) ) {
 						$redis_page_cache_config['unlimited'] = (bool) get_option( 'redis-page-cache-debug', false );
@@ -351,7 +370,7 @@ try {
 
 					// Cache the page for the chosen duration
 					if ( $redis_page_cache_config['unlimited'] ) {
-						$redis->set( $redis_page_cache_config['redis_key'], $markup_to_cache );
+						$redis->set( $redis_page_cache_config['redis_key'], serialize( $cache ) );
 					} else {
 						if ( ! isset( $redis_page_cache_config['cache_duration'] ) ) {
 							$redis_page_cache_config['cache_duration'] = (int) get_option( 'redis-page-cache-seconds', 43200 );
@@ -361,7 +380,9 @@ try {
 							$redis_page_cache_config['cache_duration'] = 43200;
 						}
 
-						$redis->setex( $redis_page_cache_config['redis_key'], $redis_page_cache_config['cache_duration'], $markup_to_cache );
+						$cache['age'] = $redis_page_cache_config['cache_duration'];
+
+						$redis->setex( $redis_page_cache_config['redis_key'], $redis_page_cache_config['cache_duration'], serialize( $cache ) );
 					}
 				}
 			}
