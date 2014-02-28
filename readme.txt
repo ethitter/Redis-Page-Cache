@@ -7,4 +7,4 @@ Tested up to: 3.8
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
-Full-page cache for WordPress powered by Redis.
+Redis-powered page cache for WordPress
