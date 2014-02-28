@@ -23,6 +23,11 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
+// Version cache keys to support plugin upgrades that modify data structures
+if ( ! defined( 'REDIS_PAGE_CACHE_CACHE_VERSION' ) ) {
+	define( 'REDIS_PAGE_CACHE_CACHE_VERSION', 0 );
+}
+
 class Redis_Page_Cache {
 	// Hold singleton instance
 	private static $__instance = null;
@@ -53,8 +58,6 @@ class Redis_Page_Cache {
 		add_action( 'admin_init', array( $this, 'register_options' ) );
 		add_action( 'admin_menu', array( $this, 'register_ui' ) );
 		add_action( 'transition_post_status', array( $this, 'flush_cache' ), 10, 3 );
-
-		$this->redis();
 	}
 
 	/**
@@ -99,6 +102,16 @@ class Redis_Page_Cache {
 		}
 
 		return self::$__redis;
+	}
+
+	/**
+	 * Turn URL into corresponding Redis cache key
+	 *
+	 * @param string $url
+	 * @return string
+	 */
+	private function build_key( $url ) {
+		return md5( 'v' . REDIS_PAGE_CACHE_CACHE_VERSION . '-' . $url );
 	}
 
 	/**
@@ -180,14 +193,13 @@ class Redis_Page_Cache {
 		if ( in_array( 'publish', array( $new_status, $old_status ) ) ) {
 			$redis = $this->redis();
 
-			$redis_key = md5( get_permalink( $post->ID ) );
+			$redis_key = $this->build_key( get_permalink( $post->ID ) );
 			foreach ( array( '', 'M-', 'T-', ) as $prefix ) {
 				$redis->del( $prefix . $redis_key );
 			}
 
 			//refresh the front page
-			$front_page = get_home_url( '/' );
-			$redis_key = md5( $front_page );
+			$redis_key = $this->build_key( trailingslashit( get_home_url() ) );
 			foreach ( array( '', 'M-', 'T-', ) as $prefix ) {
 				$redis->del( $prefix . $redis_key );
 			}
