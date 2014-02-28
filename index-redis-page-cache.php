@@ -225,7 +225,7 @@ function redis_page_cache_connect_redis() {
 	// check if PECL Extension is available
 	if ( class_exists( 'Redis' ) ) {
 		if ( $redis_page_cache_config['debug'] ) {
-			$redis_page_cache_config['debug_messages'] .= "<!-- Redis PECL module found -->\n";
+			$redis_page_cache_config['debug_messages'] .= "<!-- Redis: PECL -->\n";
 		}
 
 		$redis = new Redis();
@@ -238,7 +238,7 @@ function redis_page_cache_connect_redis() {
 	// Fallback to predis5.2.php
 	} else {
 		if ( $redis_page_cache_config['debug'] ) {
-			$redis_page_cache_config['debug_messages'] .= "<!-- using predis as a backup -->\n";
+			$redis_page_cache_config['debug_messages'] .= "<!-- Redis: Predis -->\n";
 		}
 
 		include_once dirname( __FILE__ ) . '/wp-content/plugins/redis-page-cache/predis5.2.php'; //we need this to use Redis inside of PHP
@@ -282,21 +282,21 @@ try {
 	$logged_in = (bool) preg_match( "#(wordpress_(logged|sec)|comment_author)#", var_export( $_COOKIE, true ) );
 
 	if ( $redis_page_cache_config['debug'] ) {
-		$redis_page_cache_config['debug_messages'] .= "<!-- POST request: " . ( $is_post ? 'yes' : 'no' ) . "-->\n";
-		$redis_page_cache_config['debug_messages'] .= "<!-- Logged in: " . ( $logged_in ? 'yes' : 'no' ) . "-->\n";
+		$redis_page_cache_config['debug_messages'] .= "<!-- POST request: " . ( $is_post ? 'yes' : 'no' ) . " -->\n";
+		$redis_page_cache_config['debug_messages'] .= "<!-- Logged in: " . ( $logged_in ? 'yes' : 'no' ) . " -->\n";
 	}
 
 	// Refresh request, deletes cache: either manual refresh cache by adding ?refresh=secret_string after the URL or somebody posting a comment
 	if ( redis_page_cache_refresh_has_secret( $redis_page_cache_config['secret_string'] ) || redis_page_cache_request_has_secret( $redis_page_cache_config['secret_string'] ) ) {
 		if ( $redis_page_cache_config['debug'] ) {
-			$redis_page_cache_config['debug_messages'] .= "<!-- manual refresh was required -->\n";
+			$redis_page_cache_config['debug_messages'] .= "<!-- Manual refresh requested -->\n";
 		}
 
 		$redis->del( $redis_page_cache_config['redis_key'] );
 	// This page is cached, the user isn't logged in, and it isn't a POST request, so let's use the cache
 	} elseif ( ! $is_post && ! $logged_in && $redis->exists( $redis_page_cache_config['redis_key'] ) ) {
 		if ( $redis_page_cache_config['debug'] ) {
-			$redis_page_cache_config['debug_messages'] .= "<!-- serving page from cache: key: " . $redis_page_cache_config['redis_key'] . " -->\n";
+			$redis_page_cache_config['debug_messages'] .= "<!-- Serving page from cache -->\n";
 		}
 
 		// Page is served from cache, so we don't need WP
@@ -307,18 +307,22 @@ try {
 
 		// Display generation stats if requested
 		if ( $redis_page_cache_config['stats'] ) {
-			echo "\n<!-- Page cached via Redis using the Redis Page Cache plugin. -->";
+			echo "\n<!-- Page cached via Redis using the Redis Page Cache plugin (http://eth.pw/rpc). -->";
 			echo "\n<!-- Retrieved from cache in " . redis_page_cache_time_elapsed( $start, microtime() ) . " seconds. -->";
 		}
 	// If the cache does not exist lets display the user the normal page without cache, and then fetch a new cache page
 	} elseif ( $_SERVER['REMOTE_ADDR'] != $redis_page_cache_config['server_ip'] ) {
 		if ( false === strstr( $redis_page_cache_config['current_url'], 'preview=true' ) ) {
 			if ( $redis_page_cache_config['debug'] ) {
-				$redis_page_cache_config['debug_messages'] .= "<!-- displaying page without cache -->\n";
+				$redis_page_cache_config['debug_messages'] .= "<!-- Displaying page without cache -->\n";
 			}
 
 			// If user isn't logged in and this isn't a post request, render the requested page and cache if appropriate.
 			if ( ! $is_post && ! $logged_in ) {
+				if ( $redis_page_cache_config['debug'] ) {
+					$redis_page_cache_config['debug_messages'] .= "<!-- Adding page to cache -->\n";
+				}
+
 				// We load WP to generate the cached output, so no need to load again
 				$load_wp = false;
 
@@ -330,7 +334,7 @@ try {
 
 				// Display generation stats if requested
 				if ( $redis_page_cache_config['stats'] ) {
-					echo "\n<!-- Page NOT cached via Redis using the Redis Page Cache plugin. -->";
+					echo "\n<!-- Page NOT cached via Redis using the Redis Page Cache plugin (http://eth.pw/rpc). -->";
 					echo "\n<!-- Generated and cached in " . redis_page_cache_time_elapsed( $start, microtime() ) . " seconds. -->";
 				}
 
@@ -373,19 +377,19 @@ try {
  * DEBUGGING OUTPUT
  */
 if ( $redis_page_cache_config['debug'] ) {
-	$end  = microtime();
-	$time = redis_page_cache_time_elapsed( $start, $end );
-	$redis_page_cache_config['debug_messages'] .= "<!-- Redis Page Cache by Erick Hitter. Page generated in " . $time . " seconds. -->\n";
-	$redis_page_cache_config['debug_messages'] .= "<!-- Site was cached = " . $redis_page_cache_config['cached'] . " -->\n";
-	$redis_page_cache_config['debug_messages'] .= "<!-- redis-page-cache-key = " . $redis_page_cache_config['redis_key'] . "-->\n";
-	if ( isset( $redis_page_cache_config['cache_duration'] ) ) {
-		$redis_page_cache_config['debug_messages'] .= "<!-- redis-page-cache-seconds = " . $redis_page_cache_config['cache_duration'] . " -->\n";
-	}
-	$redis_page_cache_config['debug_messages'] .= "<!-- redis-page-cache-ip = " . $redis_page_cache_config['server_ip'] . "-->\n";
-	if ( isset( $redis_page_cache_config['unlimited'] ) ) {
-		$redis_page_cache_config['debug_messages'] .= "<!-- redis-page-cache-unlimited = " . $redis_page_cache_config['unlimited'] . "-->\n";
-	}
-	$redis_page_cache_config['debug_messages'] .= "<!-- redis-page-cache-debug = " . $redis_page_cache_config['debug'] . "-->\n";
+	$redis_page_cache_config['debug_messages'] .= "<!-- Redis Page Cache by Erick Hitter (http://eth.pw/rpc). Page generated in " . redis_page_cache_time_elapsed( $start, microtime() ) . " seconds. -->\n";
+	$redis_page_cache_config['debug_messages'] .= "<!-- Cache key: " . $redis_page_cache_config['redis_key'] . "-->\n";
 
-	echo $redis_page_cache_config['debug_messages'];
+	if ( isset( $redis_page_cache_config['unlimited'] ) && $redis_page_cache_config['unlimited'] ) {
+		$cache_duration = 'infinite';
+	} elseif ( isset( $redis_page_cache_config['cache_duration'] ) ) {
+		$cache_duration = $redis_page_cache_config['cache_duration'];
+	} else {
+		$cache_duration = 'unknown';
+	}
+	$redis_page_cache_config['debug_messages'] .= "<!-- Cache duration in seconds: " . $cache_duration . " -->\n";
+
+	$redis_page_cache_config['debug_messages'] .= "<!-- Server IP: " . $redis_page_cache_config['server_ip'] . " -->\n";
+
+	echo "\n" . $redis_page_cache_config['debug_messages'];
 }
