@@ -64,6 +64,8 @@ class Redis_Page_Cache {
 
 		// Manual invalidations
 		add_action( 'admin_bar_menu', array( $this, 'admin_bar_menu' ), 999 );
+		add_action( 'post_row_actions', array( $this, 'quick_edit' ), 999, 2 );
+		add_action( 'page_row_actions', array( $this, 'quick_edit' ), 999, 2 );
 		add_action( 'wp_ajax_redis_page_cache_purge', array( $this, 'ajax_purge' ) );
 	}
 
@@ -142,8 +144,8 @@ class Redis_Page_Cache {
 	 * @return null
 	 */
 	public function register_options() {
-		register_setting( $this->ns, 'redis-page-cache-seconds', 'absint' );
-		register_setting( $this->ns, 'redis-page-cache-unlimited', 'absint' );
+		register_setting( $this->ns, $this->ns . '-seconds', 'absint' );
+		register_setting( $this->ns, $this->ns . '-unlimited', 'absint' );
 	}
 
 	/**
@@ -181,7 +183,7 @@ class Redis_Page_Cache {
 				<tr>
 					<th scope="row"><label for="duration-seconds"><?php _e( 'Duration of Caching in Seconds:', 'redis-page-cache' ); ?></label></td>
 					<td>
-						<input type="text" name="redis-page-cache-seconds" id="duration-seconds" size="15" value="<?php echo (int) get_option( 'redis-page-cache-seconds', 43200 ); ?>" />
+						<input type="text" name="<?php echo esc_attr( $this->ns ); ?>-seconds" id="duration-seconds" size="15" value="<?php echo (int) get_option( $this->ns . '-seconds', 43200 ); ?>" />
 
 						<p class="description"><?php _e( 'How many seconds would you like to cache individual pages? <strong>Recommended 12 hours or 43200 seconds</strong>.', 'redis-page-cache' ); ?></p>
 					</td>
@@ -189,7 +191,7 @@ class Redis_Page_Cache {
 				<tr>
 					<th scope="row"><label for="unlimited-cache"><?php _e( 'Cache Without Expiration?', 'redis-page-cache' ); ?></label></th>
 					<td>
-						<input type="checkbox" name="redis-page-cache-unlimited" id="unlimited-cache" value="1" <?php checked( true, (bool) get_option( 'redis-page-cache-unlimited', false ) ); ?>/>
+						<input type="checkbox" name="<?php echo esc_attr( $this->ns ); ?>-unlimited" id="unlimited-cache" value="1" <?php checked( true, (bool) get_option( $this->ns . '-unlimited', false ) ); ?>/>
 
 						<p class="description"><?php _e( 'If this option is set, the cache never expire. This option overides the setting <em>Duration of Caching in Seconds</em>.', 'redis-page-cache' ); ?></p>
 					</td>
@@ -219,8 +221,9 @@ class Redis_Page_Cache {
 	}
 
 	/**
-	 * Add a purge option to the admin bar for those with proper capabilities
+	 * Add a single-page purge option to the admin bar for those with proper capabilities
 	 *
+	 * @action admin_bar_menu
 	 * @return null
 	 */
 	public function admin_bar_menu() {
@@ -237,30 +240,64 @@ class Redis_Page_Cache {
 		}
 
 		// What are we trying to clear?
-		$page_url = set_url_scheme( esc_url( $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'] ) );
-
-		$flush_url = add_query_arg( array(
-			'action' => 'redis_page_cache_purge',
-			'nonce'  => wp_create_nonce( $page_url ),
-			'url'    => urlencode( $page_url ),
-		), admin_url( 'admin-ajax.php' ) );
+		$url = set_url_scheme( esc_url( $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'] ) );
 
 		$wp_admin_bar->add_menu( array(
-			'id'     => 'redis-page-cache',
+			'id'     => $this->ns,
 			'parent' => false,
 			'title'  => __( 'Clear Page Cache', 'redis-page-cache' ),
-			'href'   => $flush_url,
+			'href'   => $this->get_ajax_purge_url( $url ),
 		) );
+	}
+
+	/**
+	 * Add a purge link to the Quick Edit actions in post tables
+	 *
+	 * @param array $actions
+	 * @param object $post
+	 * @action post_row_actions
+	 * @action page_row_actions
+	 * @return array
+	 */
+	public function quick_edit( $actions, $post ) {
+		$actions[ $this->ns ] = '<a href="' . esc_url( $this->get_ajax_purge_url( get_permalink( $post->ID ) ) ) . '">' . __( 'Clear cache', 'redis-page-cache' ) . '</a>';
+
+		return $actions;
+	}
+
+	/**
+	 * Build URL for Ajax purge requests
+	 *
+	 * @param string $url
+	 * @return string
+	 */
+	private function get_ajax_purge_url( $url ) {
+		$url = remove_query_arg( $this->ns . '-purge', $url );
+
+		$url = add_query_arg( array(
+			'action' => 'redis_page_cache_purge',
+			'nonce'  => wp_create_nonce( $url ),
+			'url'    => urlencode( $url ),
+		), admin_url( 'admin-ajax.php' ) );
+
+		return $url;
 	}
 
 	/**
 	 * Purge a page from cache via an Ajax request
 	 *
+	 * @action wp_ajax_redis_page_cache_purge
 	 * @return null
 	 */
 	public function ajax_purge() {
-		$url      = esc_url_raw( urldecode( $_GET['url'] ) );
-		$redirect = add_query_arg( 'redis-page-cache-purge', 'failed', $url );
+		$url = esc_url_raw( urldecode( $_GET['url'] ) );
+
+		if ( isset( $_SERVER['HTTP_REFERER'] ) ) {
+			$redirect = $_SERVER['HTTP_REFERER'];
+		} else {
+			$redirect = $url;
+		}
+		$redirect = add_query_arg( $this->ns . '-purge', 'failed', $redirect );
 
 		// Check nonce and referrer
 		if ( ! check_ajax_referer( $url, 'nonce', false ) ) {
@@ -275,7 +312,7 @@ class Redis_Page_Cache {
 		// Checks passed, so we purge and redirect with success noted in the query string
 		$this->purge( $url );
 
-		$redirect = add_query_arg( 'redis-page-cache-purge', 'success', $redirect );
+		$redirect = add_query_arg( $this->ns . '-purge', 'success', $redirect );
 		wp_safe_redirect( $redirect, 302 );
 	}
 }
