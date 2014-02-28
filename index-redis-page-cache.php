@@ -315,6 +315,9 @@ try {
 		// Retrieve cached page, which is an array that includes meta data along with the page output
 		$cache = unserialize( $redis->get( $redis_page_cache_config['redis_key'] ) );
 
+		// Set headers related to content type
+		header( 'Content-Type: ' . $cache['content_type'] . '; charset=' . $cache['content_encoding'], true );
+
 		// Output cached headers from original page
 		if ( ! empty( $cache['headers'] ) ) {
 			foreach ( $cache['headers'] as $key => $value ) {
@@ -332,7 +335,7 @@ try {
 		echo trim( $cache['output'] );
 
 		// Display generation stats if requested
-		if ( $redis_page_cache_config['stats'] ) {
+		if ( 'application/xml' !== $cache['content_type'] && $redis_page_cache_config['stats'] ) {
 			echo "\n<!-- Page cached via Redis using the Redis Page Cache plugin (http://eth.pw/rpc). -->";
 			echo "\n<!-- Retrieved from cache in " . redis_page_cache_time_elapsed( $start, microtime() ) . " seconds. -->";
 		}
@@ -364,7 +367,7 @@ try {
 				echo $output;
 
 				// Display generation stats if requested
-				if ( $redis_page_cache_config['stats'] ) {
+				if ( ! is_feed() && $redis_page_cache_config['stats'] ) {
 					echo "\n<!-- Page NOT cached via Redis using the Redis Page Cache plugin (http://eth.pw/rpc). -->";
 					echo "\n<!-- Generated and cached in " . redis_page_cache_time_elapsed( $start, microtime() ) . " seconds. -->";
 				}
@@ -373,10 +376,12 @@ try {
 				if ( ! is_404() && ! is_search() ) {
 					// Default cache payload
 					$cache = array(
-						'output'  => $output,
-						'time'    => time(),
-						'age'     => 31536000, // one year in seconds
-						'headers' => array(),
+						'output'           => $output,
+						'time'             => time(),
+						'age'              => 31536000, // one year in seconds
+						'content_type'     => is_feed() ? 'application/xml' : 'text/html',
+						'content_encoding' => get_option( 'blog_charset', 'UTF-8' ),
+						'headers'          => array(),
 					);
 
 					// Capture certain headers
