@@ -308,24 +308,27 @@ try {
 		$load_wp = false;
 		$redis_page_cache_config['cached'] = true;
 
+		// Retrieve cached page, which is an array that includes meta data along with the page output
 		$cache = unserialize( $redis->get( $redis_page_cache_config['redis_key'] ) );
 
+		// Output cache headers if desired
 		if ( $redis_page_cache_config['cache_headers'] ) {
 			header( 'Last-Modified: ' . gmdate( 'D, d M Y H:i:s', $cache['time'] ) . ' GMT', true );
 			header( 'Cache-Control: max-age=' . $cache['age'] . ', must-revalidate', false );
 		}
 
+		// Output page content
 		echo trim( $cache['output'] );
-
-		if ( $redis_page_cache_config['debug'] ) {
-			$redis_page_cache_config['debug_messages'] .= "<!-- Last Modified: " . gmdate( 'D, d M Y H:i:s', $cache['time'] ) . " GMT . -->\n";
-			$redis_page_cache_config['debug_messages'] .= "<!-- Max Age: " . $cache['age'] . " -->\n";
-		}
 
 		// Display generation stats if requested
 		if ( $redis_page_cache_config['stats'] ) {
 			echo "\n<!-- Page cached via Redis using the Redis Page Cache plugin (http://eth.pw/rpc). -->";
 			echo "\n<!-- Retrieved from cache in " . redis_page_cache_time_elapsed( $start, microtime() ) . " seconds. -->";
+		}
+
+		if ( $redis_page_cache_config['debug'] ) {
+			$redis_page_cache_config['debug_messages'] .= "<!-- Last Modified: " . gmdate( 'D, d M Y H:i:s', $cache['time'] ) . " GMT . -->\n";
+			$redis_page_cache_config['debug_messages'] .= "<!-- Max Age: " . $cache['age'] . " -->\n";
 		}
 	// If the cache does not exist lets display the user the normal page without cache, and then fetch a new cache page
 	} elseif ( $_SERVER['REMOTE_ADDR'] != $redis_page_cache_config['server_ip'] ) {
