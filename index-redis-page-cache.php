@@ -311,7 +311,7 @@ try {
 	$load_wp = true;
 
 	// Relevant details on the current request
-	$is_post   = (bool) 'POST' === $_SERVER['REQUEST_METHOD'];
+	$is_post   = ( ! empty( $GLOBALS['HTTP_RAW_POST_DATA'] ) || ! empty( $_POST ) );
 	$logged_in = (bool) preg_match( "#(wordpress_(logged|sec)|comment_author)#", var_export( $_COOKIE, true ) );
 
 	if ( $redis_page_cache_config['debug'] ) {
