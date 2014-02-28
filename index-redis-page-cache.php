@@ -29,7 +29,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 global $redis_page_cache_config;
 
 $redis_page_cache_config = array(
-	'debug'                   => true,
+	'debug'                   => false,
 	'debug_messages'          => '',
 	'stats'                   => false,
 	'cached'                  => false,
