@@ -92,18 +92,6 @@ function wp_redis_cache_request_has_secret( $secret ) {
 }
 
 /**
- * Determine if request is from a server other than the one running this code
- *
- * @return bool
- */
-function wp_redis_cache_is_remote_page_load( $current_url, $server_ip ) {
-	return ( isset( $_SERVER['HTTP_REFERER'] )
-			&& $_SERVER['HTTP_REFERER'] == $current_url
-			&& $_SERVER['REQUEST_URI'] != '/'
-			&& $_SERVER['REMOTE_ADDR'] != $server_ip );
-}
-
-/**
  * Set proper IP address for proxied requests
  *
  * @return null
@@ -278,7 +266,7 @@ try {
 	}
 
 	// Refresh request, deletes cache: either manual refresh cache by adding ?refresh=secret_string after the URL or somebody posting a comment
-	if ( wp_redis_cache_refresh_has_secret( $wp_redis_cache_config['secret_string'] ) || wp_redis_cache_request_has_secret( $wp_redis_cache_config['secret_string'] ) || wp_redis_cache_is_remote_page_load( $wp_redis_cache_config['current_url'], $wp_redis_cache_config['server_ip'] ) ) {
+	if ( wp_redis_cache_refresh_has_secret( $wp_redis_cache_config['secret_string'] ) || wp_redis_cache_request_has_secret( $wp_redis_cache_config['secret_string'] ) ) {
 		if ( $wp_redis_cache_config['debug'] ) {
 			$wp_redis_cache_config['debug_messages'] .= "<!-- manual refresh was required -->\n";
 		}
