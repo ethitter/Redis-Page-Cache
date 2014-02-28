@@ -303,7 +303,7 @@ try {
 
 				// Render page into an output buffer and display
 				ob_start();
-				require_once dirname( __FILE__ ) . '/wp`-blog-header.php';
+				require_once dirname( __FILE__ ) . '/wp-blog-header.php';
 				$markup_to_cache = trim( ob_get_clean() );
 				echo $markup_to_cache;
 
