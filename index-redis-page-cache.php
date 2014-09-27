@@ -37,6 +37,7 @@ $redis_page_cache_config = array(
 	'secret_string'           => 'changeme',
 	'redis_server'            => '127.0.0.1',
 	'redis_port'              => 6379,
+	'redis_socket'            => null,
 	'redis_db'                => 0,
 	'cache_version'           => 0,
 	'cache_headers'           => true,
@@ -260,7 +261,12 @@ function redis_page_cache_connect_redis() {
 		}
 
 		$redis = new Redis();
-		$redis->connect( $redis_page_cache_config['redis_server'], $redis_page_cache_config['redis_port'] );
+
+		if ( $redis_page_cache_config['redis_socket'] ) {
+			$redis->connect( $redis_page_cache_config['redis_socket'] );
+		} else {
+			$redis->connect( $redis_page_cache_config['redis_server'], $redis_page_cache_config['redis_port'] );
+		}
 
 		// Default DB is 0, so only need to SELECT if other
 		if ( $redis_page_cache_config['redis_db'] ) {
