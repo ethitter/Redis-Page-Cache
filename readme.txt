@@ -1,6 +1,6 @@
 === Redis Page Cache ===
 Contributors: ethitter
-Donate link: https://ethitter.com/plugins/
+Donate link: https://ethitter.com/donate/
 Tags: redis, cache, page cache, performance
 Requires at least: 1.5
 Tested up to: 3.8
